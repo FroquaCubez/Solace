@@ -38,12 +38,12 @@ namespace ViennaDotNet.ApiServer.Controllers
                     "tokens",
                     tokens.getTokens().Collect(() => new Dictionary<string, Token>(), (hashmap, token) =>
                     {
-                        hashmap.Add(token.id, new Token(
+                        hashmap[token.id] = new Token(
                             Enum.Parse<Token.Type>(token.token.type.ToString()),
                             new Dictionary<string, string>(token.token.properties),
                             Rewards.fromDBRewardsModel(token.token.rewards).toApiResponse(),
                             Enum.Parse<Token.Lifetime>(token.token.lifetime.ToString())
-                        ));
+                        );
                     }, DictionaryExtensions.AddRange)
                 }
             }, null));

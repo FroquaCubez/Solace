@@ -45,7 +45,7 @@ namespace ViennaDotNet.ApiServer.Utils
             {
                 int? version = updates.GetOrDefault(name, null);
                 if (version != null)
-                    map.Add(@as, version);
+                    map[@as] = version;
             }
         }
     }

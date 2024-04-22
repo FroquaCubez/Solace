@@ -274,14 +274,14 @@ namespace ViennaDotNet.DB
                             var json = reader.GetString(0);
                             var version = reader.GetInt32(1);
                             var value = JsonConvert.DeserializeObject(json, entry.valueType)!;
-                            results.getValues.Add(entry.type, new Results.Result(value, version));
+                            results.getValues[entry.type] = new Results.Result(value, version);
                         }
                         else
                         {
                             try
                             {
                                 var value = Activator.CreateInstance(entry.valueType)!;
-                                results.getValues.Add(entry.type, new Results.Result(value, 1));
+                                results.getValues[entry.type] = new Results.Result(value, 1);
                             }
                             catch (Exception exception)
                             {
@@ -292,7 +292,7 @@ namespace ViennaDotNet.DB
                 }
 
                 foreach (ExtrasEntry entry in extras)
-                    results.extras.Add(entry.name, entry.value);
+                    results.extras[entry.name] = entry.value;
 
                 foreach (Func<Results, Query> function in thenFunctions)
                 {

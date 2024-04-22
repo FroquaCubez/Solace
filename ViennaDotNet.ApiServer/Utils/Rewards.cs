@@ -32,7 +32,7 @@ namespace ViennaDotNet.ApiServer.Utils
 
         public Rewards addItem(string id, int count)
         {
-            items.Add(id, items.GetOrDefault(id, 0) + count);
+            items[id] = items.GetOrDefault(id, 0) + count;
             return this;
         }
 
