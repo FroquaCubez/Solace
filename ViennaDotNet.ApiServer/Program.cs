@@ -21,7 +21,9 @@ namespace ViennaDotNet.ApiServer
         internal static Catalog Catalog;
 
         internal static EventBusClient eventBus;
+        internal static ObjectStoreClient objectStore;
         internal static TappablesManager tappablesManager;
+        internal static BuildplateInstancesManager buildplateInstancesManager;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         public static void Main(string[] args)
@@ -138,10 +140,9 @@ namespace ViennaDotNet.ApiServer
             }
             Log.Information("Connected to event bus");
             Log.Information("Connecting to object storage");
-            ObjectStoreClient objectStoreClient;
             try
             {
-                objectStoreClient = ObjectStoreClient.create(objectStoreConnectionString);
+                objectStore = ObjectStoreClient.create(objectStoreConnectionString);
             }
             catch (ObjectStoreClientException exception)
             {
@@ -154,6 +155,7 @@ namespace ViennaDotNet.ApiServer
             Catalog = new Catalog();
 
             tappablesManager = new TappablesManager(eventBus);
+            buildplateInstancesManager = new BuildplateInstancesManager(eventBus);
 
             CreateHostBuilder(args, httpPort).Build().Run();
 

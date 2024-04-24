@@ -1,12 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Linq;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.DB.Models.Common;
 
 namespace ViennaDotNet.DB.Models.Player
 {
+    [JsonObject(MemberSerialization.OptIn)]
     public sealed class Tokens
     {
+        [JsonProperty]
         private readonly Dictionary<string, Token> tokens;
 
         public Tokens()

@@ -14,6 +14,8 @@ namespace ViennaDotNet.ApiServer.Authentication
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
+            await Task.Yield();
+
             // skip authentication if endpoint has [AllowAnonymous] attribute
             var endpoint = Context.GetEndpoint();
             if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null)
