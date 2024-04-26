@@ -16,6 +16,10 @@ namespace ViennaDotNet.EventBus.Server
         private readonly ReaderWriterLockSlim subscribersLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
         private readonly Dictionary<string, HashSet<Subscriber>> subscribers = new();
 
+
+        private readonly ReaderWriterLockSlim requestHandlersLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+        private readonly Dictionary<string, HashSet<RequestHandler>> requestHandlers = new();
+
         public Subscriber? addSubscriber(string queueName, Action<Subscriber.Message> consumer)
         {
             if (!validateQueueName(queueName))
@@ -166,6 +170,174 @@ namespace ViennaDotNet.EventBus.Server
                 server.subscribersLock.ExitReadLock();
 
                 return true;
+            }
+        }
+
+        public Server.RequestHandler? addRequestHandler(string queueName, Func<RequestHandler.Request, TaskCompletionSource<string>> requestHandler, Action<RequestHandler.ErrorMessage> errorConsumer)
+        {
+            if (!validateQueueName(queueName))
+                return null;
+
+            Log.Debug($"Adding request handler for {queueName}");
+
+            requestHandlersLock.EnterWriteLock();
+
+            RequestHandler handler = new RequestHandler(this, queueName, requestHandler, errorConsumer);
+            requestHandlers.ComputeIfAbsent(queueName, name => new())!.Add(handler);
+
+            requestHandlersLock.ExitWriteLock();
+
+            return handler;
+        }
+
+        public sealed class RequestHandler
+        {
+            private readonly Server server;
+
+            private readonly string queueName;
+            private readonly Func<Request, TaskCompletionSource<string>> requestHandler;
+            private readonly Action<ErrorMessage> errorConsumer;
+            private bool ended = false;
+
+            internal RequestHandler(Server server, string queueName, Func<Request, TaskCompletionSource<string>> requestHandler, Action<ErrorMessage> errorConsumer)
+            {
+                this.server = server;
+                this.queueName = queueName;
+                this.requestHandler = requestHandler;
+                this.errorConsumer = errorConsumer;
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            public void remove()
+            {
+                ended = true;
+
+                new Thread(() =>
+                {
+                    Log.Debug("Removing handler");
+                    server.requestHandlersLock.EnterWriteLock();
+                    HashSet<RequestHandler>? requestHandlers = server.requestHandlers.GetOrDefault(queueName, null);
+                    if (requestHandlers != null)
+                        requestHandlers.Remove(this);
+
+                    server.requestHandlersLock.ExitWriteLock();
+                }).Start();
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            internal TaskCompletionSource<string>? request(Request request)
+            {
+                if (!ended)
+                    return requestHandler.Invoke(request);
+                else
+                    return null;
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            private void error()
+            {
+                if (!ended)
+                {
+                    errorConsumer.Invoke(new ErrorMessage());
+                    ended = true;
+                }
+            }
+
+            public sealed class Request
+            {
+                public readonly long timestamp;
+                public readonly string type;
+                public readonly string data;
+
+                internal Request(long timestamp, string type, string data)
+                {
+                    this.timestamp = timestamp;
+                    this.type = type;
+                    this.data = data;
+                }
+            }
+
+            public sealed class ErrorMessage
+            {
+                internal ErrorMessage()
+                {
+                    // empty
+                }
+            }
+        }
+
+        private IEnumerable<RequestHandler> getHandlers(string queueName)
+        {
+            HashSet<RequestHandler>? requestHandlers = this.requestHandlers.GetOrDefault(queueName, null);
+            if (requestHandlers != null)
+                return requestHandlers;
+            else
+                return Enumerable.Empty<RequestHandler>();
+        }
+
+        public RequestSender addRequestSender()
+        {
+            Log.Debug("Adding request sender");
+            return new RequestSender(this);
+        }
+
+        public sealed class RequestSender
+        {
+            private readonly Server server;
+
+            private bool closed = false;
+
+            internal RequestSender(Server server)
+            {
+                this.server = server;
+            }
+
+            public void remove()
+            {
+                Log.Debug("Removing request sender");
+                closed = true;
+            }
+
+            public TaskCompletionSource<string?>? request(string queueName, long timestamp, string type, string data)
+            {
+                if (closed)
+                    throw new InvalidOperationException();
+
+                if (!validateQueueName(queueName))
+                    return null;
+
+                if (!validateType(type))
+                    return null;
+
+                if (!validateData(data))
+                    return null;
+
+                server.requestHandlersLock.EnterReadLock();
+                LinkedList<RequestHandler> requestHandlers = server.getHandlers(queueName).Collect(() => new LinkedList<RequestHandler>(), (list, item) => list.AddLast(item), (l1, l2) => l1.AddRange(l2));
+                server.requestHandlersLock.ExitReadLock();
+
+                RequestHandler.Request request = new RequestHandler.Request(timestamp, type, data);
+                TaskCompletionSource<string?> responseCompletableFuture = new();
+
+                new Thread(() =>
+                {
+                    foreach (RequestHandler requestHandler in requestHandlers)
+                    {
+                        TaskCompletionSource<string>? completableFuture = requestHandler.request(request);
+                        if (completableFuture != null)
+                        {
+                            string response = completableFuture.Task.Result;
+                            if (response != null)
+                            {
+                                responseCompletableFuture.SetResult(response);
+                                break;
+                            }
+                        }
+                    }
+                    responseCompletableFuture./*SetResult*/TrySetResult(null);
+                }).Start();
+
+                return responseCompletableFuture;
             }
         }
 

@@ -72,8 +72,10 @@ namespace ViennaDotNet.EventBus.Client
         private bool closed = false;
         private bool error = false;
 
-        private Dictionary<int, Publisher> publishers = new();
-        private Dictionary<int, Subscriber> subscribers = new();
+        private readonly Dictionary<int, Publisher> publishers = new();
+        private readonly Dictionary<int, Subscriber> subscribers = new();
+        private readonly Dictionary<int, RequestSender> requestSenders = new();
+        private readonly Dictionary<int, RequestHandler> requestHandlers = new();
         private int nextChannelId = 1;
 
         private EventBusClient(Socket socket)
@@ -122,6 +124,11 @@ namespace ViennaDotNet.EventBus.Client
                     publisher.closed();
                 });
                 publishers.Clear();
+                requestSenders.ForEach((channelId, requestSender) =>
+                {
+                    requestSender.closed();
+                });
+                requestSenders.Clear();
             });
 
             incomingThread = new Thread(() =>
@@ -194,6 +201,12 @@ namespace ViennaDotNet.EventBus.Client
                     subscriber.error();
                 });
                 subscribers.Clear();
+
+                requestHandlers.ForEach((channelId, requestHandler) =>
+                {
+                    requestHandler.error();
+                });
+                requestHandlers.Clear();
             });
 
             outgoingThread.Start();
@@ -283,6 +296,34 @@ namespace ViennaDotNet.EventBus.Client
             return subscriber;
         }
 
+        public RequestSender addRequestSender()
+        {
+            lockObj.EnterWriteLock();
+            int channelId = getUnusedChannelId();
+            RequestSender requestSender = new RequestSender(this, channelId);
+            if (sendMessage(channelId, "REQ"))
+                requestSenders[channelId] = requestSender;
+            else
+                requestSender.closed();
+
+            lockObj.ExitWriteLock();
+            return requestSender;
+        }
+
+        public RequestHandler addRequestHandler(string queueName, RequestHandler.IHandler handler)
+        {
+            lockObj.EnterWriteLock();
+            int channelId = getUnusedChannelId();
+            RequestHandler requestHandler = new RequestHandler(this, channelId, queueName, handler);
+            if (sendMessage(channelId, "HND " + queueName))
+                requestHandlers[channelId] = requestHandler;
+            else
+                requestHandler.error();
+
+            lockObj.ExitWriteLock();
+            return requestHandler;
+        }
+
         internal void removePublisher(int channelId)
         {
             lockObj.EnterWriteLock();
@@ -294,6 +335,20 @@ namespace ViennaDotNet.EventBus.Client
         {
             lockObj.EnterWriteLock();
             subscribers.Remove(channelId);
+            lockObj.ExitWriteLock();
+        }
+
+        internal void removeRequestSender(int channelId)
+        {
+            lockObj.EnterWriteLock();
+            requestSenders.Remove(channelId);
+            lockObj.ExitWriteLock();
+        }
+
+        internal void removeRequestHandler(int channelId)
+        {
+            lockObj.EnterWriteLock();
+            requestHandlers.Remove(channelId);
             lockObj.ExitWriteLock();
         }
 
@@ -318,6 +373,14 @@ namespace ViennaDotNet.EventBus.Client
             Subscriber? subscriber = subscribers.GetOrDefault(channelId, null);
             if (subscriber != null)
                 return subscriber.handleMessage(parts[1]);
+
+            RequestSender? requestSender = requestSenders.GetOrDefault(channelId, null);
+            if (requestSender != null)
+                return requestSender.handleMessage(parts[1]);
+
+            RequestHandler? requestHandler = requestHandlers.GetOrDefault(channelId, null);
+            if (requestHandler != null)
+                return requestHandler.handleMessage(parts[1]);
 
             return channelId < nextChannelId;
         }

@@ -1,6 +1,7 @@
 ﻿using CliUtils;
 using CliUtils.Exceptions;
 using Serilog;
+using System.Reflection.Emit;
 using ViennaDotNet.EventBus.Client;
 
 namespace ViennaDotNet.TappablesGenerator
@@ -54,9 +55,19 @@ namespace ViennaDotNet.TappablesGenerator
             Log.Information("Connected to event bus");
 
             Generator generator = new Generator();
-            ActiveTiles activeTiles = new ActiveTiles(eventBusClient);
-            Spawner spawner = new Spawner(eventBusClient, activeTiles, generator);
-            spawner.run();
+            Spawner[] spawner = new Spawner[1];
+            ActiveTiles activeTiles = new ActiveTiles(eventBusClient, new ActiveTiles.ActiveTileListener(
+                activeTile =>
+                {
+                    spawner[0].spawnTile(activeTile.tileX, activeTile.tileY);
+                },
+                activeTile =>
+                {
+                    // empty
+                }
+            ));
+            spawner[0] = new Spawner(eventBusClient, activeTiles, generator);
+            spawner[0].run();
         }
     }
 }

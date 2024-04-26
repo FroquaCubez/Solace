@@ -13,7 +13,7 @@ namespace ViennaDotNet.TappablesGenerator
 {
     public class Spawner
     {
-        private static readonly long SPAWN_INTERVAL = /*15*/5 * 1000;
+        private static readonly long SPAWN_INTERVAL = 15 * 1000;
 
         private readonly ActiveTiles activeTiles;
         private readonly Generator generator;
@@ -57,33 +57,54 @@ namespace ViennaDotNet.TappablesGenerator
             }
         }
 
-        private void doSpawnCycle()
+        public void spawnTile(int tileX, int tileY)
         {
-            spawnCycleTime += SPAWN_INTERVAL;
-            spawnCycleIndex++;
+            Log.Information($"Spawning tappables for tile {tileX},{tileY}");
 
-            ActiveTiles.ActiveTile[] activeTiles = this.activeTiles.getActiveTiles(spawnCycleTime);
-            Log.Information($"Spawning tappables for {activeTiles.Length} tiles");
-            foreach (ActiveTiles.ActiveTile activeTile in activeTiles)
+            long spawnCycleTime = this.spawnCycleTime;
+            int spawnCycleIndex = this.spawnCycleIndex;
+
+            while (spawnCycleTime < U.CurrentTimeMillis())
             {
-                int lastSpawnCycle = lastSpawnCycleForTile.GetOrDefault((activeTile.tileX << 16) + activeTile.tileY, 0);
-                int cyclesToSpawn = Math.Min(spawnCycleIndex - lastSpawnCycle, maxTappableLifetimeIntervals);
-                for (int index = 0; index < cyclesToSpawn; index++)
-                    doSpawnCycleForTile(activeTile.tileX, activeTile.tileY, spawnCycleTime - SPAWN_INTERVAL * (cyclesToSpawn - index - 1));
-
-                lastSpawnCycleForTile[(activeTile.tileX << 16) + activeTile.tileY] = spawnCycleIndex;
+                spawnCycleTime += SPAWN_INTERVAL;
+                spawnCycleIndex++;
             }
+
+            doSpawnCyclesForTile(tileX, tileY, spawnCycleTime, spawnCycleIndex);
         }
 
-        private void doSpawnCycleForTile(int tileX, int tileY, long currentTime)
+        private void doSpawnCycle()
+        {
+            ActiveTiles.ActiveTile[] activeTiles = this.activeTiles.getActiveTiles(spawnCycleTime);
+
+            Log.Information($"Spawning tappables for {activeTiles.Length} tiles");
+
+            while (spawnCycleTime < U.CurrentTimeMillis())
+            {
+                spawnCycleTime += SPAWN_INTERVAL;
+                spawnCycleIndex++;
+            }
+
+            foreach (ActiveTiles.ActiveTile activeTile in activeTiles)
+                doSpawnCyclesForTile(activeTile.tileX, activeTile.tileY, spawnCycleTime, spawnCycleIndex);
+        }
+
+        private void doSpawnCyclesForTile(int tileX, int tileY, long spawnCycleTime, int spawnCycleIndex)
+        {
+            int lastSpawnCycle = lastSpawnCycleForTile.GetOrDefault((tileX << 16) + tileY, 0);
+            int cyclesToSpawn = Math.Min(spawnCycleIndex - lastSpawnCycle, maxTappableLifetimeIntervals);
+            for (int index = 0; index < cyclesToSpawn; index++)
+                spawnTappablesForTile(tileX, tileY, spawnCycleTime - SPAWN_INTERVAL * (cyclesToSpawn - index - 1));
+
+            lastSpawnCycleForTile[(tileX << 16) + tileY] = spawnCycleIndex;
+        }
+
+        private void spawnTappablesForTile(int tileX, int tileY, long currentTime)
         {
             foreach (Tappable tappable in generator.generateTappables(tileX, tileY, currentTime))
             {
-                publisher.publish("tappables", "tappableSpawn", JsonConvert.SerializeObject(tappable)).ContinueWith(tast =>
-                {
-                    if (!tast.Result)
-                        Log.Error("Event bus server rejected tappable spawn event");
-                });
+                if (!publisher.publish("tappables", "tappableSpawn", JsonConvert.SerializeObject(tappable)).Result)
+                    Log.Error("Event bus server rejected tappable spawn event");
             }
         }
     }

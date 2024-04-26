@@ -12,19 +12,19 @@ namespace ViennaDotNet.ApiServer.Utils
 {
     public sealed class TappablesManager
     {
-        private readonly Publisher publisher;
         private readonly Subscriber subscriber;
+        private readonly RequestSender requestSender;
 
         private readonly Dictionary<string, Dictionary<string, Tappable>> tappables = new();
 
         public TappablesManager(EventBusClient eventBusClient)
         {
-            publisher = eventBusClient.addPublisher();
             subscriber = eventBusClient.addSubscriber("tappables", new Subscriber.SubscriberListener(handleEvent, () =>
             {
                 Log.Fatal("Tappables event bus subscriber error");
                 Environment.Exit(1);
             }));
+            this.requestSender = eventBusClient.addRequestSender();
         }
 
         public Tappable[] getTappablesAround(double lat, double lon, double radius)
@@ -69,11 +69,9 @@ namespace ViennaDotNet.ApiServer.Utils
         {
             int tileX = xToTile(lonToX(lon));
             int tileY = yToTile(latToY(lat));
-            publisher.publish("tappables", "activeTile", JsonConvert.SerializeObject(new ActiveTileNotification(tileX, tileY, playerId))).ContinueWith(task =>
-            {
-                if (!task.Result)
-                    Log.Error("Event bus server rejected active tile notification event");
-            });
+            string? response = requestSender.request("tappables", "activeTile", JsonConvert.SerializeObject(new ActiveTileNotification(tileX, tileY, playerId))).Task.Result;
+            if (response == null)
+                Log.Warning("Active tile notification event was rejected/ignored");
         }
 
         private record ActiveTileNotification(
@@ -104,13 +102,6 @@ namespace ViennaDotNet.ApiServer.Utils
                             break;
                         }
                         addTappable(tappable);
-                        break;
-                    }
-                case "activeTile":
-                    break;
-                default:
-                    {
-                        Log.Error($"Invalid tappables event bus event type {_event.type}");
                         break;
                     }
             }

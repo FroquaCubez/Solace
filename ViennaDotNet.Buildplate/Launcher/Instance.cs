@@ -65,8 +65,8 @@ namespace ViennaDotNet.Buildplate.Launcher
         private readonly TaskCompletionSource readyFuture = new TaskCompletionSource();
 
         private readonly string eventBusQueueName;
-        private Publisher? publisher = null;
         private Subscriber? subscriber = null;
+        private RequestHandler? requestHandler = null;
 
         private readonly HttpClient okHttpClient;
 
@@ -183,12 +183,26 @@ namespace ViennaDotNet.Buildplate.Launcher
 
                 Log.Information("Running server");
 
-                publisher = eventBusClient.addPublisher();
                 subscriber = eventBusClient.addSubscriber(eventBusQueueName, new Subscriber.SubscriberListener(
                     @event => handleConnectorEvent(@event),
                     () =>
                     {
                         Log.Error("Event bus subscriber error");
+                        beginShutdown();
+                    }
+                ));
+                requestHandler = eventBusClient.addRequestHandler(eventBusQueueName, new RequestHandler.Handler(
+                    request =>
+                    {
+                        object responseObject = handleConnectorRequest(request);
+                        if (responseObject != null)
+                            return JsonConvert.SerializeObject(responseObject);
+                        else
+                            return null;
+                    },
+                    () =>
+                    {
+                        Log.Error("Event bus request handler error");
                         beginShutdown();
                     }
                 ));
@@ -232,9 +246,9 @@ namespace ViennaDotNet.Buildplate.Launcher
             }
             finally
             {
-                publisher?.close();
-
                 subscriber?.close();
+
+                requestHandler?.close();
 
                 cleanupBaseDir();
 
@@ -260,45 +274,6 @@ namespace ViennaDotNet.Buildplate.Launcher
                         {
                             Log.Information("Saving snapshot");
                             sendApiServerRequest<object>($"/buildplate/snapshot/{playerId}/{buildplateId}", worldSavedMessage.dataBase64, false/*null*/);
-                        }
-                    }
-                    break;
-                case "playerConnectedRequest":
-                    {
-                        Request<PlayerConnectedRequest>? playerConnectedRequest = readRequestJson<PlayerConnectedRequest>(@event.data);
-                        if (playerConnectedRequest != null)
-                        {
-                            if (playerConnectedRequest.request.uuid == playerId)    // TODO: probably remove this eventually and put in API server
-                            {
-                                PlayerConnectedResponse? playerConnectedResponse = sendApiServerRequest<PlayerConnectedResponse>($"/buildplate/join/{instanceId}", playerConnectedRequest.request, true);
-                                if (playerConnectedResponse != null)
-                                {
-                                    sendConnectorResponse("playerConnectedResponse", playerConnectedRequest.id, playerConnectedResponse);
-                                    Log.Information($"Player {playerConnectedRequest.request.uuid} has connected");
-                                }
-                            }
-                            else
-                                sendConnectorResponse("playerConnectedResponse", playerConnectedRequest.id, new PlayerConnectedResponse(false, null));
-                        }
-                    }
-                    break;
-                case "playerDisconnectedRequest":
-                    {
-                        Request<PlayerDisconnectedRequest>? playerDisconnectedRequest = readRequestJson<PlayerDisconnectedRequest>(@event.data);
-                        if (playerDisconnectedRequest != null)
-                        {
-                            PlayerDisconnectedResponse? playerDisconnectedResponse = sendApiServerRequest<PlayerDisconnectedResponse>($"/buildplate/leave/{instanceId}/{playerDisconnectedRequest.request.playerId}", playerDisconnectedRequest.request, true);
-                            if (playerDisconnectedResponse != null)
-                            {
-                                sendConnectorResponse("playerDisconnectedResponse", playerDisconnectedRequest.id, playerDisconnectedResponse);
-                                Log.Information($"Player {playerDisconnectedRequest.request.playerId} has disconnected");
-
-                                if (playerDisconnectedRequest.request.playerId == playerId)
-                                {
-                                    Log.Information("Host player has disconnected, beginning shutdown");
-                                    beginShutdown();
-                                }
-                            }
                         }
                     }
                     break;
@@ -333,6 +308,60 @@ namespace ViennaDotNet.Buildplate.Launcher
             }
         }
 
+        private object? handleConnectorRequest(RequestHandler.Request request)
+        {
+            switch (request.type)
+            {
+                case "playerConnected":
+                    {
+                        PlayerConnectedRequest? playerConnectedRequest = readJson<PlayerConnectedRequest>(request.data);
+                        if (playerConnectedRequest != null)
+                        {
+                            if (playerConnectedRequest.uuid == playerId)    // TODO: probably remove this eventually and put in API server
+                            {
+                                PlayerConnectedResponse? playerConnectedResponse = sendApiServerRequest<PlayerConnectedResponse>($"/buildplate/join/{instanceId}", playerConnectedRequest, true);
+                                if (playerConnectedResponse != null)
+                                {
+                                    Log.Information("Player {} has connected", playerConnectedRequest.uuid);
+                                    return playerConnectedResponse;
+                                }
+                            }
+
+                            else
+                            {
+                                return new PlayerConnectedResponse(false, null);
+                            }
+                        }
+                    }
+                    break;
+                case "playerDisconnected":
+                    {
+                        PlayerDisconnectedRequest? playerDisconnectedRequest = readJson<PlayerDisconnectedRequest>(request.data);
+                        if (playerDisconnectedRequest != null)
+                        {
+                            PlayerDisconnectedResponse? playerDisconnectedResponse = sendApiServerRequest<PlayerDisconnectedResponse>($"/buildplate/leave/{instanceId}/{playerDisconnectedRequest.playerId}", playerDisconnectedRequest, true);
+                            if (playerDisconnectedResponse != null)
+                            {
+                                Log.Information($"Player {playerDisconnectedRequest.playerId} has disconnected");
+
+                                if (playerDisconnectedRequest.playerId == playerId)
+                                {
+                                    Log.Information("Host player has disconnected, beginning shutdown");
+                                    new Thread(() =>
+                                    {
+                                        beginShutdown();
+                                    }).Start();
+                                }
+
+                                return playerDisconnectedResponse;
+                            }
+                        }
+                    }
+                    break;
+            }
+            return null;
+        }
+
         private T? readJson<T>(string str)
         {
             try
@@ -345,39 +374,6 @@ namespace ViennaDotNet.Buildplate.Launcher
                 beginShutdown();
                 return default;
             }
-        }
-
-        private record Request<T>(
-            string id,
-            T request
-        )
-        {
-        }
-
-        private Request<T>? readRequestJson<T>(string str)
-        {
-            RequestResponseMessage? requestResponseMessage = readJson<RequestResponseMessage>(str);
-            if (requestResponseMessage != null)
-            {
-                T? message = readJson<T>(requestResponseMessage.message);
-                if (message != null)
-                    return new Request<T>(requestResponseMessage.requestId, message);
-            }
-            return null;
-        }
-
-        private void sendConnectorResponse(string type, string requestId, object messageObject)
-        {
-            //Gson gson = new Gson().newBuilder().serializeNulls().create();
-            Task<bool> completableFuture = publisher!.publish(eventBusQueueName, type, JsonConvert.SerializeObject(new RequestResponseMessage(requestId, JsonConvert.SerializeObject(messageObject))));
-            completableFuture.ContinueWith(task =>
-            {
-                if (!task.Result)
-                {
-                    Log.Error("Event bus publisher error");
-                    beginShutdown();
-                }
-            });
         }
 
         private T? sendApiServerRequest<T>(string path, object? obj, bool returnResponse/*, Type? responseClass*/)
@@ -621,6 +617,7 @@ namespace ViennaDotNet.Buildplate.Launcher
                     .put("doDaylightCycle", "false")
                     .put("doWeatherCycle", "false")
                     .put("doMobSpawning", "false")
+                    .put("fountain:doMobDespawn", "false")
                 )
                 .put("WorldGenSettings", new NbtBuilder.Compound()
                     .put("seed", (long)0)    // TODO

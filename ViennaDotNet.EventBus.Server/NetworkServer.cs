@@ -191,7 +191,11 @@ namespace ViennaDotNet.EventBus.Server
                 switch (parts[0])
                 {
                     case "PUB":
-                        return new PublisherChannel(this, channelId, networkServer.server.addPublisher());
+                        PublisherChannel publisherChannel = new PublisherChannel(this, channelId, networkServer);
+                        if (!publisherChannel.isValid())
+                            return null;
+
+                        return publisherChannel;
                     case "SUB":
                         {
                             if (parts.Length < 2)
@@ -202,6 +206,25 @@ namespace ViennaDotNet.EventBus.Server
                                 return null;
 
                             return subscriberChannel;
+                        }
+                    case "REQ":
+                        {
+                            RequestSenderChannel requestSenderChannel = new RequestSenderChannel(this, channelId, networkServer);
+                            if (!requestSenderChannel.isValid())
+                                return null;
+
+                            return requestSenderChannel;
+                        }
+                    case "HND":
+                        {
+                            if (parts.Length < 2)
+                                return null;
+
+                            RequestHandlerChannel requestHandlerChannel = new RequestHandlerChannel(this, channelId, parts[1], networkServer);
+                            if (!requestHandlerChannel.isValid())
+                                return null;
+
+                            return requestHandlerChannel;
                         }
                     default:
                         return null;
@@ -220,6 +243,8 @@ namespace ViennaDotNet.EventBus.Server
                 this.channelId = channelId;
             }
 
+            public abstract bool isValid();
+
             public abstract void handleCommand(string command);
             public abstract void handleClose();
 
@@ -234,11 +259,14 @@ namespace ViennaDotNet.EventBus.Server
             private readonly Server.Publisher publisher;
             private bool _error = false;
 
-            public PublisherChannel(Connection connection, int channelId, Server.Publisher publisher)
+            public PublisherChannel(Connection connection, int channelId, NetworkServer networkServer)
                     : base(connection, channelId)
             {
-                this.publisher = publisher;
+                publisher = networkServer.server.addPublisher();
             }
+
+            public override bool isValid()
+                => true;
 
             public override void handleCommand(string command)
             {
@@ -296,7 +324,7 @@ namespace ViennaDotNet.EventBus.Server
                 subscriber = netServer.server.addSubscriber(queueName, handleMessage)!;
             }
 
-            public bool isValid()
+            public override bool isValid()
             {
                 return subscriber != null;
             }
@@ -325,6 +353,214 @@ namespace ViennaDotNet.EventBus.Server
                 }
                 else if (message is Server.Subscriber.ErrorMessage)
                     sendMessage("ERR");
+            }
+        }
+
+        private sealed class RequestSenderChannel : Channel
+        {
+            private readonly Server.RequestSender requestSender;
+            // TODO: should they be volatile?
+            private volatile TaskCompletionSource<string>? currentPendingResponse = null;
+            private volatile bool _error = false;
+
+            public RequestSenderChannel(Connection connection, int channelId, NetworkServer networkServer)
+                : base(connection, channelId)
+            {
+                requestSender = networkServer.server.addRequestSender();
+            }
+
+            public override bool isValid()
+            {
+                return true;
+            }
+
+            public override void handleCommand(string command)
+            {
+                if (_error)
+                {
+                    sendMessage("ERR");
+                    return;
+                }
+
+                if (currentPendingResponse != null)
+                {
+                    error();
+                    return;
+                }
+
+                string[] parts = command.Split(' ', 2);
+                if (parts[0] == "REQ")
+                {
+                    string entryString = parts[1];
+                    string[] fields = entryString.Split(':', 3);
+                    if (fields.Length != 3)
+                    {
+                        error();
+                        return;
+                    }
+
+                    long timestamp = U.CurrentTimeMillis();
+                    string queueName = fields[0];
+                    string type = fields[1];
+                    string data = fields[2];
+
+                    TaskCompletionSource<string> completableFuture = requestSender.request(queueName, timestamp, type, data);
+                    if (completableFuture != null)
+                    {
+                        currentPendingResponse = completableFuture;
+                        sendMessage("ACK");
+                        completableFuture.Task.ContinueWith(task =>
+                        {
+                            if (currentPendingResponse != null)
+                            {
+                                if (currentPendingResponse != completableFuture)
+                                    throw new InvalidOperationException();
+
+                                currentPendingResponse = null;
+                                if (task.Result != null)
+                                    sendMessage("REP " + task.Result);
+                                else
+                                    sendMessage("NREP");
+                            }
+                        });
+                    }
+                    else
+                        error();
+                }
+                else
+                    error();
+            }
+
+            public override void handleClose()
+            {
+                requestSender.remove();
+                currentPendingResponse = null;
+            }
+
+            private void error()
+            {
+                _error = true;
+                currentPendingResponse = null;
+                sendMessage("ERR");
+            }
+        }
+
+        private sealed class RequestHandlerChannel : Channel
+        {
+            private readonly Server.RequestHandler requestHandler;
+            private readonly Dictionary<int, TaskCompletionSource<string?>> pendingResponses = new();
+            private int nextRequestId = 1;
+            private bool _error = false;
+
+            public RequestHandlerChannel(Connection connection, int channelId, string queueName, NetworkServer networkServer)
+                : base(connection, channelId)
+            {
+                requestHandler = networkServer.server.addRequestHandler(queueName, this.handleRequest, this.handleError);
+            }
+
+            public override bool isValid()
+            {
+                return requestHandler != null;
+            }
+
+            public override void handleCommand(string command)
+            {
+                if (_error)
+                {
+                    sendMessage("ERR");
+                    return;
+                }
+
+                string[] parts = command.Split(' ', 2);
+                if (parts[0] == "REP")
+                {
+                    string entryString = parts[1];
+                    string[] fields = entryString.Split(':', 2);
+                    if (fields.Length != 2)
+                    {
+                        error();
+                        return;
+                    }
+
+                    int requestId;
+                    try
+                    {
+                        requestId = int.Parse(fields[0]);
+                    }
+                    catch (FormatException)
+                    {
+                        error();
+                        return;
+                    }
+                    string data = fields[1];
+
+                    if (pendingResponses.TryGetValue(requestId, out TaskCompletionSource<string?>? responseCompletableFuture))
+                        responseCompletableFuture.SetResult(data);
+                    else
+                        error();
+
+                    pendingResponses.Remove(requestId);
+                }
+                else if (parts[0] == "NREP")
+                {
+                    int requestId;
+                    try
+                    {
+                        requestId = int.Parse(parts[1]);
+                    }
+                    catch (FormatException)
+                    {
+                        error();
+                        return;
+                    }
+
+                    TaskCompletionSource<string?>? responseCompletableFuture = pendingResponses.JavaRemove(requestId);
+                    if (responseCompletableFuture != null)
+                        responseCompletableFuture.SetResult(null);
+                    else
+                        error();
+                }
+                else
+                    error();
+            }
+
+            public override void handleClose()
+            {
+                requestHandler.remove();
+                pendingResponses.Values.ForEach(completableFuture => completableFuture.SetResult(null));
+                pendingResponses.Clear();
+            }
+
+            private TaskCompletionSource<string?> handleRequest(Server.RequestHandler.Request request)
+            {
+                int requestId = nextRequestId++;
+                TaskCompletionSource<string?> responseCompletableFuture = new();
+                pendingResponses[requestId] = responseCompletableFuture;
+
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.Append(requestId);
+                stringBuilder.Append(":");
+                stringBuilder.Append(request.timestamp.ToString());
+                stringBuilder.Append(":");
+                stringBuilder.Append(request.type);
+                stringBuilder.Append(":");
+                stringBuilder.Append(request.data);
+                sendMessage(stringBuilder.ToString());
+
+                return responseCompletableFuture;
+            }
+
+            private void handleError(Server.RequestHandler.ErrorMessage errorMessage)
+            {
+                error();
+            }
+
+            private void error()
+            {
+                _error = true;
+                pendingResponses.Values.ForEach(completableFuture=>completableFuture.SetResult(null));
+                pendingResponses.Clear();
+                sendMessage("ERR");
             }
         }
     }

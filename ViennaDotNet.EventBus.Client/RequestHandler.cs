@@ -12,11 +12,11 @@ namespace ViennaDotNet.EventBus.Client
         private readonly int channelId;
         private readonly string queueName;
 
-        private readonly Handler handler;
+        private readonly IHandler handler;
 
         private volatile bool closed = false;
 
-        RequestHandler(EventBusClient client, int channelId, string queueName, Handler handler)
+        internal RequestHandler(EventBusClient client, int channelId, string queueName, IHandler handler)
         {
             this.client = client;
             this.channelId = channelId;
@@ -27,8 +27,8 @@ namespace ViennaDotNet.EventBus.Client
         public void close()
         {
             closed = true;
-            client.removeSubscriber(this.channelId);
-            client.sendMessage(this.channelId, "CLOSE");
+            client.removeSubscriber(channelId);
+            client.sendMessage(channelId, "CLOSE");
         }
 
         internal bool handleMessage(string message)
@@ -98,7 +98,7 @@ namespace ViennaDotNet.EventBus.Client
             handler.error();
         }
 
-        public interface Handler
+        public interface IHandler
         {
             TaskCompletionSource<string?> requestAsync(Request request)
             {
@@ -113,6 +113,24 @@ namespace ViennaDotNet.EventBus.Client
             string? request(Request request);
 
             void error();
+        }
+
+        public class Handler : IHandler
+        {
+            public Func<Request, string?>? Request;
+            public Action? Error;
+
+            public Handler(Func<Request, string?>? _request, Action? _error)
+            {
+                Request = _request;
+                Error = _error;
+            }
+
+            public string? request(Request request)
+                => Request?.Invoke(request);
+
+            public void error()
+                => Error?.Invoke();
         }
 
         public sealed class Request

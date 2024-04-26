@@ -17,34 +17,39 @@ namespace ViennaDotNet.TappablesGenerator
         private static readonly long ACTIVE_TILE_EXPIRY_TIME = 2 * 60 * 1000;
 
         private readonly Dictionary<int, ActiveTile> activeTiles = new();
+        private readonly IActiveTileListener activeTileListener;
 
-        public ActiveTiles(EventBusClient eventBusClient)
+        public ActiveTiles(EventBusClient eventBusClient, IActiveTileListener activeTileListener)
         {
-            eventBusClient.addSubscriber("tappables", new Subscriber.SubscriberListener(_event =>
+            this.activeTileListener = activeTileListener;
+
+            eventBusClient.addRequestHandler("tappables", new RequestHandler.Handler(request =>
             {
-                if (_event.type == "activeTile")
+                if (request.type == "activeTile")
                 {
                     ActiveTileNotification activeTileNotification;
                     try
                     {
-                        activeTileNotification = JsonConvert.DeserializeObject<ActiveTileNotification>(_event.data)!;
+                        activeTileNotification = JsonConvert.DeserializeObject<ActiveTileNotification>(request.data)!;
                     }
                     catch (Exception exception)
                     {
                         Log.Error($"Could not deserialise active tile notification event: {exception}");
-                        return;
+                        return null;
                     }
 
                     long currentTime = U.CurrentTimeMillis();
-                    this.pruneActiveTiles(currentTime);
+                    pruneActiveTiles(currentTime);
                     for (int tileX = activeTileNotification.x - ACTIVE_TILE_RADIUS; tileX < activeTileNotification.x + ACTIVE_TILE_RADIUS + 1; tileX++)
                     {
                         for (int tileY = activeTileNotification.y - ACTIVE_TILE_RADIUS; tileY < activeTileNotification.y + ACTIVE_TILE_RADIUS + 1; tileY++)
-                        {
-                            this.markTileActive(tileX, tileY, currentTime);
-                        }
+                            markTileActive(tileX, tileY, currentTime);
                     }
+
+                    return string.Empty;
                 }
+                else
+                    return null;
             }, () =>
             {
                 Log.Error("Event bus subscriber error");
@@ -64,6 +69,7 @@ namespace ViennaDotNet.TappablesGenerator
             {
                 Log.Information($"Tile {tileX},{tileY} is becoming active");
                 activeTile = new ActiveTile(tileX, tileY, currentTime, currentTime);
+                activeTileListener.active(activeTile);
             }
             else
                 activeTile = new ActiveTile(tileX, tileY, activeTile.firstActiveTime, currentTime);
@@ -77,15 +83,19 @@ namespace ViennaDotNet.TappablesGenerator
 
             foreach (var entry in activeTiles)
             {
-                if (entry.Value.latestActiveTime + ACTIVE_TILE_EXPIRY_TIME <= currentTime)
+                ActiveTile activeTile = entry.Value;
+                if (activeTile.latestActiveTime + ACTIVE_TILE_EXPIRY_TIME <= currentTime)
                 {
-                    Log.Information($"Tile {entry.Value.tileX},{entry.Value.tileY} is inactive");
+                    Log.Information($"Tile {activeTile.tileX},{activeTile.tileY} is inactive");
                     entriesToRemove.Add(entry.Key);
                 }
             }
 
             foreach (var key in entriesToRemove)
-                activeTiles.Remove(key);
+            {
+                ActiveTile activeTile = activeTiles.JavaRemove(key)!;
+                activeTileListener.inactive(activeTile);
+            }
         }
 
         public record ActiveTile(
@@ -103,6 +113,31 @@ namespace ViennaDotNet.TappablesGenerator
             string playerId
         )
         {
+        }
+
+        public interface IActiveTileListener
+        {
+            void active(ActiveTile activeTile);
+
+            void inactive(ActiveTile activeTile);
+        }
+
+        public class ActiveTileListener : IActiveTileListener
+        {
+            public Action<ActiveTile>? Active;
+            public Action<ActiveTile>? Inactive;
+
+            public ActiveTileListener(Action<ActiveTile>? _active, Action<ActiveTile>? _inactive)
+            {
+                Active = _active;
+                Inactive = _inactive;
+            }
+
+            public void active(ActiveTile activeTile)
+                => Active?.Invoke(activeTile);
+
+            public void inactive(ActiveTile activeTile)
+                => Inactive?.Invoke(activeTile);
         }
     }
 }

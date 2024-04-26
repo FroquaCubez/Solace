@@ -6,8 +6,9 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Uma.Uuid;
+using ViennaDotNet.Common.Utils;
 using ViennaDotNet.EventBus.Client;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace ViennaDotNet.Buildplate.Launcher
 {
     // TODO: need to deal with instances that are idle for too long with no player connecting
@@ -16,7 +17,7 @@ namespace ViennaDotNet.Buildplate.Launcher
         private readonly Starter starter;
 
         private readonly Publisher publisher;
-        private readonly Subscriber subscriber;
+        private readonly RequestHandler requestHandler;
         private int runningInstanceCount = 0;
         private bool shuttingDown = false;
         private readonly object lockObj = new bool();
@@ -33,17 +34,12 @@ namespace ViennaDotNet.Buildplate.Launcher
 
         record StartNotification(
             string instanceId,
-            StartNotification.Info? info
+            string playerId,
+            string buildplateId,
+            string address,
+            int port
         )
         {
-            public record Info(
-                string playerId,
-                string buildplateId,
-                string address,
-                int port
-            )
-            {
-            }
         }
 
         public InstanceManager(EventBusClient eventBusClient, Starter starter)
@@ -52,16 +48,16 @@ namespace ViennaDotNet.Buildplate.Launcher
 
             publisher = eventBusClient.addPublisher();
 
-            subscriber = eventBusClient.addSubscriber("buildplates", new Subscriber.SubscriberListener(
-                @event =>
+            requestHandler = eventBusClient.addRequestHandler("buildplates", new RequestHandler.Handler(
+                request =>
                 {
-                    if (@event.type == "startRequest")
+                    if (request.type == "start")
                     {
                         Monitor.Enter(lockObj);
                         if (shuttingDown)
                         {
                             Monitor.Exit(lockObj);
-                            return;
+                            return null;
                         }
                         runningInstanceCount += 1;
                         Monitor.Exit(lockObj);
@@ -70,29 +66,30 @@ namespace ViennaDotNet.Buildplate.Launcher
                         try
 
                         {
-                            startRequest = JsonConvert.DeserializeObject<StartRequest>(@event.data)!;
+                            startRequest = JsonConvert.DeserializeObject<StartRequest>(request.data)!;
                         }
                         catch (Exception exception)
                         {
                             Log.Warning($"Bad start request: {exception}");
-                            return;
+                            return null;
                         }
 
-                        Log.Information($"Starting buildplate instance {startRequest.instanceId} for player {startRequest.playerId} buildplate {startRequest.buildplateId}");
+                        string instanceId = U.RandomUuid().ToString();
+                        Log.Information($"Starting buildplate instance {instanceId} for player {startRequest.playerId} buildplate {startRequest.buildplateId}");
 
-                        Instance? instance = starter.startInstance(startRequest.instanceId, startRequest.playerId, startRequest.buildplateId, startRequest.survival, startRequest.night);
+                        Instance? instance = starter.startInstance(instanceId, startRequest.playerId, startRequest.buildplateId, startRequest.survival, startRequest.night);
                         if (instance == null)
                         {
-                            Log.Error($"Error starting buildplate instance {startRequest.instanceId}");
-                            sendEventBusMessageJson("started", new StartNotification(startRequest.instanceId, null));
-                            return;
+                            Log.Error($"Error starting buildplate instance {instanceId}");
+                            return null;
                         }
-                        sendEventBusMessageJson("started", new StartNotification(startRequest.instanceId, new StartNotification.Info(
+                        sendEventBusMessageJson("started", new StartNotification(
+                            instanceId,
                             startRequest.playerId,
                             startRequest.buildplateId,
                             instance.publicAddress,
                             instance.port
-                        )));
+                        ));
 
                         new Thread(() =>
                         {
@@ -108,11 +105,15 @@ namespace ViennaDotNet.Buildplate.Launcher
                             runningInstanceCount -= 1;
                             Monitor.Exit(lockObj);
                         }).Start();
+
+                        return instanceId;
                     }
+                    else
+                        return null;
                 },
                 () =>
                 {
-                    Log.Error("Event bus subscriber error");
+                    Log.Error("Event bus request handler error");
                 }
             ));
         }
@@ -133,7 +134,8 @@ namespace ViennaDotNet.Buildplate.Launcher
 
         public void shutdown()
         {
-            subscriber.close();
+            requestHandler.close();
+            publisher.close();
 
             Monitor.Enter(lockObj);
             shuttingDown = true;
