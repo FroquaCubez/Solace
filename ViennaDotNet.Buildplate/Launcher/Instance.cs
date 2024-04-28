@@ -30,10 +30,12 @@ namespace ViennaDotNet.Buildplate.Launcher
         public static Instance run(EventBusClient eventBusClient, string playerId, string buildplateId, string instanceId, bool survival, bool night, string publicAddress, int port, int serverInternalPort, string javaCmd, FileInfo fountainBridgeJar, DirectoryInfo serverTemplateDir, string fabricJarName, FileInfo connectorPluginJar, DirectoryInfo baseDir, string eventBusConnectionstring)
         {
             Instance instance = new Instance(eventBusClient, playerId, buildplateId, instanceId, survival, night, publicAddress, port, serverInternalPort, javaCmd, fountainBridgeJar, serverTemplateDir, fabricJarName, connectorPluginJar, baseDir, eventBusConnectionstring);
+
             new Thread(instance.run)
             {
                 Name = $"Instance {instanceId}"
             }.Start();
+
             return instance;
         }
 
@@ -297,7 +299,7 @@ namespace ViennaDotNet.Buildplate.Launcher
                         PlayerConnectedRequest? playerConnectedRequest = readJson<PlayerConnectedRequest>(request.data);
                         if (playerConnectedRequest != null)
                         {
-                            if (playerConnectedRequest.uuid == playerId /*|| true*/)    // TODO: probably remove this eventually and put in API server
+                            if (playerConnectedRequest.uuid == playerId)    // TODO: probably remove this eventually and put in API server
                             {
                                 PlayerConnectedResponse? playerConnectedResponse = sendEventBusRequest<PlayerConnectedResponse>("playerConnected", playerConnectedRequest, true).Result;
                                 if (playerConnectedResponse != null)
@@ -432,7 +434,7 @@ namespace ViennaDotNet.Buildplate.Launcher
                 return null;
             }
             bool warnedMissingServerFiles = false;
-            if (!copyServerFile(Path.Combine(serverTemplateDir.FullName, ".fabric/server"), Path.Combine(workDir.FullName, ".fabric/server"), true))
+            if (!copyServerFile(Path.Combine(Path.Combine(serverTemplateDir.FullName, ".fabric"), "server"), Path.Combine(workDir.FullName, ".fabric/server"), true))
             {
                 if (!warnedMissingServerFiles)
                 {
@@ -727,7 +729,7 @@ namespace ViennaDotNet.Buildplate.Launcher
 
             try
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo(javaCmd, $"-jar ./{fabricJarName} -nogui")
+                ProcessStartInfo startInfo = new ProcessStartInfo(javaCmd, $"-jar {fabricJarName} -nogui")
                 {
                     WorkingDirectory = serverWorkDir!.FullName,
                     RedirectStandardOutput = true,

@@ -6,27 +6,27 @@ using Serilog;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace ViennaDotNet.ApiServer.Utils
+namespace ViennaDotNet.Buildplate.Launcher
 {
-    public sealed class BuildplatePreviewGenerator
+    public sealed class PreviewGenerator
     {
-        private readonly string command;
+        private readonly string javaCmd;
+	private readonly FileInfo fountainJar;
 
-        public BuildplatePreviewGenerator(string command)
+        public PreviewGenerator(string javaCmd, string fountainJar)
         {
-            this.command = command;
+            this.javaCmd = javaCmd;
+            this.fountainJar = new FileInfo(fountainJar);
         }
 
-        public string? generatePreview(Buildplates.Buildplate buildplate, byte[] serverData)
+        public string? generatePreview(byte[] serverData, bool isNight)
         {
-            bool isNight = buildplate.night;
-
             // originally read as byte array, later converted to string, reading byte[] is harder, so I just read it as string
             /*byte[]*/
-            string previewBytes = string.Empty;
+            string previewBytes;
             try
             {
-                ProcessStartInfo processStartInfo = new ProcessStartInfo(command)
+                ProcessStartInfo processStartInfo = new ProcessStartInfo(javaCmd, new string[] { "-cp", fountainJar.FullName, "micheal65536.fountain.preview.PreviewGenerator" })
                 {
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -68,6 +68,8 @@ namespace ViennaDotNet.ApiServer.Utils
                 StringBuilder builder = new StringBuilder();
                 while (process.StandardOutput.Peek() > -1)
                     builder.AppendLine(process.StandardOutput.ReadLine()); // maybe only Append?
+
+                previewBytes = builder.ToString();
             }
             catch (IOException exception)
             {

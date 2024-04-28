@@ -16,22 +16,22 @@ namespace ViennaDotNet.ApiServer.Utils
 {
     public sealed class BuildplateInstanceRequestHandler
     {
-        public static void start(EarthDB earthDB, EventBusClient eventBusClient, ObjectStoreClient objectStoreClient, Catalog catalog, String buildplatePreviewGeneratorCommand)
+        public static void start(EarthDB earthDB, EventBusClient eventBusClient, ObjectStoreClient objectStoreClient, Catalog catalog)
         {
-            new BuildplateInstanceRequestHandler(earthDB, eventBusClient, objectStoreClient, catalog, buildplatePreviewGeneratorCommand);
+            new BuildplateInstanceRequestHandler(earthDB, eventBusClient, objectStoreClient, catalog);
         }
 
         private readonly EarthDB earthDB;
         private readonly ObjectStoreClient objectStoreClient;
         private readonly Catalog catalog;
-        private readonly BuildplatePreviewGenerator buildplatePreviewGenerator;
+        private readonly BuildplateInstancesManager buildplateInstancesManager;
 
-        public BuildplateInstanceRequestHandler(EarthDB earthDB, EventBusClient eventBusClient, ObjectStoreClient objectStoreClient, Catalog catalog, string buildplatePreviewGeneratorCommand)
+        public BuildplateInstanceRequestHandler(EarthDB earthDB, EventBusClient eventBusClient, ObjectStoreClient objectStoreClient, Catalog catalog)
         {
             this.earthDB = earthDB;
             this.objectStoreClient = objectStoreClient;
             this.catalog = catalog;
-            this.buildplatePreviewGenerator = new BuildplatePreviewGenerator(buildplatePreviewGeneratorCommand);
+            this.buildplateInstancesManager = new BuildplateInstancesManager(eventBusClient);    // TODO: would be nicer to use the same instance as BuildplatesRouter
 
             RequestHandler requestHandler = eventBusClient.addRequestHandler("buildplates", new RequestHandler.Handler(
                 request =>
@@ -42,7 +42,6 @@ namespace ViennaDotNet.ApiServer.Utils
                         {
                             case "load":
                                 {
-
                                     BuildplateLoadRequest? buildplateLoadRequest = readRawRequest<BuildplateLoadRequest>(request.data);
                                     if (buildplateLoadRequest == null)
                                         return null;
@@ -181,7 +180,7 @@ namespace ViennaDotNet.ApiServer.Utils
             if (buildplateUnsafeForPreviewGenerator == null)
                 return false;
 
-            string? preview = buildplatePreviewGenerator.generatePreview(buildplateUnsafeForPreviewGenerator, serverData);
+            string? preview = buildplateInstancesManager.getBuildplatePreview(serverData, buildplateUnsafeForPreviewGenerator.night);
             if (preview == null)
                 Log.Warning("Could not generate preview for buildplate");
 

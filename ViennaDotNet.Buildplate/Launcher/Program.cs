@@ -106,15 +106,18 @@ namespace ViennaDotNet.Buildplate.Launcher
             }
             Log.Information("Connected to event bus");
 
-            Starter starter = new Starter(eventBusClient, eventBusConnectionString, publicAddress, bridgeJar, serverTemplateDir, fabricJarName, connectorPluginJar);
-            InstanceManager instanceManager = new InstanceManager(eventBusClient, starter);
+            string javaCmd = JavaLocator.locateJava();
+            Starter starter = new Starter(eventBusClient, eventBusConnectionString, publicAddress, javaCmd, bridgeJar, serverTemplateDir, fabricJarName, connectorPluginJar);
+            PreviewGenerator previewGenerator = new PreviewGenerator(javaCmd, bridgeJar);
+            InstanceManager instanceManager = new InstanceManager(eventBusClient, starter, previewGenerator);
 
             AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
             {
-                new Thread(() =>
-                {
+                // maybe works better like this?
+                //new Thread(() =>
+                //{
                     instanceManager.shutdown();
-                });
+                //});
             };
         }
     }

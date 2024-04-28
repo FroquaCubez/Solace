@@ -31,12 +31,12 @@ namespace ViennaDotNet.Buildplate.Launcher
         private readonly HashSet<int> portsInUse = new HashSet<int>();
         private readonly HashSet<int> serverInternalPortsInUse = new HashSet<int>();
 
-        public Starter(EventBusClient eventBusClient, string eventBusConnectionString, string publicAddress, string bridgeJar, string serverTemplateDir, string fabricJarName, string connectorPluginJar)
+        public Starter(EventBusClient eventBusClient, string eventBusConnectionString, string publicAddress, string javaCmd, string bridgeJar, string serverTemplateDir, string fabricJarName, string connectorPluginJar)
         {
             this.eventBusClient = eventBusClient;
 
             this.publicAddress = publicAddress;
-            this.javaCmd = locateJava();
+            this.javaCmd = javaCmd;
             this.tmpDir = new DirectoryInfo(Path.GetTempPath());
             this.eventBusConnectionString = eventBusConnectionString;
 
@@ -84,44 +84,6 @@ namespace ViennaDotNet.Buildplate.Launcher
                 if (!portsInUse.Remove(port))
                     throw new InvalidOperationException();
             }
-        }
-
-        private static string locateJava()
-        {
-            Log.Information("Trying to locate Java");
-
-            string? javaHome = Environment.GetEnvironmentVariable("JAVA_HOME");
-            if (!string.IsNullOrEmpty(javaHome))
-            {
-                Log.Information("Trying JAVA_HOME");
-                try
-                {
-                    FileInfo file = new FileInfo(Path.Combine(javaHome, "bin", "java"));
-                    if (file.CanExecute())
-                    {
-                        string path = file.FullName;
-                        Log.Information($"Using Java from JAVA_HOME ({path})");
-                        return path;
-                    }
-                    file = new FileInfo(Path.Combine(javaHome, "bin", "java.exe"));
-                    if (file.CanExecute())
-                    {
-                        string path = file.FullName;
-                        Log.Information($"Using Java from JAVA_HOME ({path})");
-                        return path;
-                    }
-                }
-                catch (IOException)
-                {
-                    // empty
-                }
-                Log.Information("Java from JAVA_HOME is not suitable (does not exist or cannot be accessed)");
-            }
-            else
-                Log.Information("JAVA_HOME is not set");
-
-            Log.Information("Using \"java\"");
-            return "java";
         }
 
         private DirectoryInfo? createInstanceBaseDir(string instanceId)

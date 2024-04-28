@@ -1,11 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Serilog;
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Net;
 using Uma.Uuid;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.EventBus.Client;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ViennaDotNet.ApiServer.Utils
 {
@@ -69,6 +71,17 @@ namespace ViennaDotNet.ApiServer.Utils
             {
                 return instances.GetOrDefault(instanceId, null);
             }
+        }
+
+        public string? getBuildplatePreview(byte[] serverData, bool night)
+        {
+            Log.Information("Requesting buildplate preview");
+
+            string? preview = requestSender.request("buildplates", "preview", JsonConvert.SerializeObject(new PreviewRequest(Convert.ToBase64String(serverData), night))).Task.Result;
+            if (preview == null)
+                Log.Error("Preview request was rejected/ignored");
+
+            return preview;
         }
 
         private void handleEvent(Subscriber.Event @event)
@@ -146,6 +159,13 @@ namespace ViennaDotNet.ApiServer.Utils
             string playerId,
             string buildplateId,
             bool survival,
+            bool night
+        )
+        {
+        }
+
+        private record PreviewRequest(
+            string serverDataBase64,
             bool night
         )
         {

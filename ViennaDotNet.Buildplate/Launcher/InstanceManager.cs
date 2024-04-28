@@ -7,14 +7,17 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Uma.Uuid;
+using ViennaDotNet.Buildplate.Launcher;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.EventBus.Client;
+
 namespace ViennaDotNet.Buildplate.Launcher
 {
     // TODO: need to deal with instances that are idle for too long with no player connecting
     public class InstanceManager
     {
         private readonly Starter starter;
+        private readonly PreviewGenerator previewGenerator;
 
         private readonly Publisher publisher;
         private readonly RequestHandler requestHandler;
@@ -42,9 +45,16 @@ namespace ViennaDotNet.Buildplate.Launcher
         {
         }
 
-        public InstanceManager(EventBusClient eventBusClient, Starter starter)
+        record PreviewRequest(
+            string serverDataBase64,
+            bool night
+        )
+        {
+        }
+        public InstanceManager(EventBusClient eventBusClient, Starter starter, PreviewGenerator previewGenerator)
         {
             this.starter = starter;
+            this.previewGenerator = previewGenerator;
 
             publisher = eventBusClient.addPublisher();
 
@@ -107,6 +117,29 @@ namespace ViennaDotNet.Buildplate.Launcher
                         }).Start();
 
                         return instanceId;
+                    }
+                    else if (request.type == "preview")
+                    {
+                        PreviewRequest previewRequest;
+                        byte[] serverData;
+                        try
+                        {
+                            previewRequest = JsonConvert.DeserializeObject<PreviewRequest>(request.data)!;
+                            serverData = Convert.FromBase64String(previewRequest.serverDataBase64);
+                        }
+                        catch (Exception exception)
+                        {
+                            Log.Warning($"Bad preview request: {exception}");
+                            return null;
+                        }
+
+                        Log.Information("Generating buildplate preview");
+
+                        string preview = previewGenerator.generatePreview(serverData, previewRequest.night);
+                        if (preview == null)
+                            Log.Warning("Could not generate preview for buildplate");
+
+                        return preview;
                     }
                     else
                         return null;

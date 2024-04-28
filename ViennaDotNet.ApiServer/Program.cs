@@ -79,21 +79,12 @@ namespace ViennaDotNet.ApiServer
                 .ArgName("objectstore")
                 .Desc("Object storage address, defaults to localhost:5396")
                 .Build());
-            options.addOption(Option.builder()
-                .Option("previewGenerator")
-                .LongOpt("previewGenerator")
-                .HasArg()
-                .ArgName("command")
-                .Required()
-                .Desc("Command to run the buildplate preview generator")
-                .Build());
 
             CommandLine commandLine;
             int httpPort;
             string dbConnectionString;
             string eventBusConnectionString;
             string objectStoreConnectionString;
-            string buildplatePreviewGeneratorCommand;
 #if !DEBUG
             try
             {
@@ -103,7 +94,6 @@ namespace ViennaDotNet.ApiServer
                 dbConnectionString = commandLine.hasOption("db") ? commandLine.getOptionValue("db")! : "./earth.db";
                 eventBusConnectionString = commandLine.hasOption("eventbus") ? commandLine.getOptionValue("eventbus")! : "localhost:5532";
                 objectStoreConnectionString = commandLine.hasOption("objectstore") ? commandLine.getOptionValue("objectstore")! : "localhost:5396";
-                buildplatePreviewGeneratorCommand = commandLine.getOptionValue("previewGenerator")!;
 #if !DEBUG
             }
             catch (ParseException exception)
@@ -157,7 +147,7 @@ namespace ViennaDotNet.ApiServer
             tappablesManager = new TappablesManager(eventBus);
             buildplateInstancesManager = new BuildplateInstancesManager(eventBus);
 
-            BuildplateInstanceRequestHandler.start(DB, eventBus, objectStore, Catalog, buildplatePreviewGeneratorCommand);
+            BuildplateInstanceRequestHandler.start(DB, eventBus, objectStore, Catalog);
 
             CreateHostBuilder(args, httpPort).Build().Run();
 
