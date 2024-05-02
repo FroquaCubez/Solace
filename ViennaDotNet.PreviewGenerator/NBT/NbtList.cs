@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ViennaDotNet.PreviewGenerator.Utils.NBT
+namespace ViennaDotNet.PreviewGenerator.NBT
 {
     public class NbtList : IList
     {
@@ -30,7 +30,7 @@ namespace ViennaDotNet.PreviewGenerator.Utils.NBT
 
         public object SyncRoot => null!;
 
-        public object? this[int index] { get => this.get(index); set => throw new InvalidOperationException(); }
+        public object? this[int index] { get => get(index); set => throw new InvalidOperationException(); }
 
         public NbtList(NbtType type, ICollection collection)
         {
@@ -43,7 +43,7 @@ namespace ViennaDotNet.PreviewGenerator.Utils.NBT
         public NbtList(NbtType tagClass, params object[] array)
         {
             ArgumentNullException.ThrowIfNull(type, "tagClass");
-            this.type = tagClass;
+            type = tagClass;
             this.array = (Array)array.Clone();
         }
 

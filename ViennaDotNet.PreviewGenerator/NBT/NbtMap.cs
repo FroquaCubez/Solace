@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ViennaDotNet.Common.Utils;
 
-namespace ViennaDotNet.PreviewGenerator.Utils.NBT
+namespace ViennaDotNet.PreviewGenerator.NBT
 {
     public class NbtMap// : IDictionary<string, object>
     {
@@ -67,9 +67,9 @@ namespace ViennaDotNet.PreviewGenerator.Utils.NBT
                 return false;
         }
 
-        public object get(object key)
+        public object get(string key)
         {
-            return NbtUtils.copy(map.GetOrDefault(key));
+            return NbtUtils.copyObject(map.GetOrDefault(key));
         }
 
         public ICollection<string> keySet()
@@ -237,7 +237,7 @@ namespace ViennaDotNet.PreviewGenerator.Utils.NBT
                 consumer.Invoke(d);
         }
 
-        public string? getstring(string key)
+        public string? getString(string key)
         {
             return getstring(key, "");
         }
@@ -414,7 +414,7 @@ namespace ViennaDotNet.PreviewGenerator.Utils.NBT
                     }
                     else
                     {
-                        if (!objects.deepEquals(value, m.get(key)))
+                        if (!ObjectExtensions.DeepEquals(value, m.get(key)))
                             return false;
                     }
                 }
@@ -460,7 +460,7 @@ namespace ViennaDotNet.PreviewGenerator.Utils.NBT
             {
                 var e = enumerator.Current;
                 string key = e.Key;
-                string value = NbtUtils.tostring(e.Value);
+                string value = NbtUtils.toString(e.Value);
 
                 string str = NbtUtils.indent("\"" + key + "\": " + value);
                 sb.Append(str);

@@ -7,8 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using ViennaDotNet.Common.Utils;
+using ViennaDotNet.PreviewGenerator.NBT;
 using ViennaDotNet.PreviewGenerator.Utils;
-using ViennaDotNet.PreviewGenerator.Utils.NBT;
 
 namespace ViennaDotNet.PreviewGenerator.Registry
 {
@@ -236,32 +236,32 @@ namespace ViennaDotNet.PreviewGenerator.Registry
         }
 
         [Obsolete]
-        public static string getName(int id)
+        public static string? getName(int id)
         {
             return getName(id, null);
         }
 
         [Obsolete]
-        public static BedrockMapping getBedrockMapping(int javaId)
+        public static BedrockMapping? getBedrockMapping(int javaId)
         {
             return getBedrockMapping(javaId, null);
         }
 
-        public static string? getName(int id, FabricRegistryManager? fabricRegistryManager)
+        public static string? getName(int id, /*FabricRegistryManager?*/object? fabricRegistryManager)
         {
             string? name = map.GetOrDefault(id, null);
             if (name == null && fabricRegistryManager != null)
-                name = fabricRegistryManager.getBlockName(id);
+                name = null;//fabricRegistryManager.getBlockName(id);
 
             return name;
         }
 
-        public static BedrockMapping? getBedrockMapping(int javaId, FabricRegistryManager? fabricRegistryManager)
+        public static BedrockMapping? getBedrockMapping(int javaId, /*FabricRegistryManager?*/object? fabricRegistryManager)
         {
             BedrockMapping? bedrockMapping = bedrockMap.GetOrDefault(javaId, null);
             if (bedrockMapping == null && fabricRegistryManager != null)
             {
-                string fabricName = fabricRegistryManager.getBlockName(javaId);
+                string? fabricName = null;//fabricRegistryManager.getBlockName(javaId);
                 if (fabricName != null)
                     bedrockMapping = bedrockNonVanillaMap.GetOrDefault(fabricName, null);
             }

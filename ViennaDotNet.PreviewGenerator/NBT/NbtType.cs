@@ -8,27 +8,27 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using ViennaDotNet.Common.Utils;
 
-namespace ViennaDotNet.PreviewGenerator.Utils.NBT
+namespace ViennaDotNet.PreviewGenerator.NBT
 {
     public sealed class NbtType
     {
         public static readonly NbtType END = new NbtType(typeof(void), Enum.END);
-    public static readonly NbtType BYTE = new NbtType(typeof(byte), Enum.BYTE);
-    public static readonly NbtType SHORT = new NbtType(typeof(short), Enum.SHORT);
-    public static readonly NbtType INT = new NbtType(typeof(int), Enum.INT);
-    public static readonly NbtType LONG = new NbtType(typeof(long), Enum.LONG);
-    public static readonly NbtType FLOAT = new NbtType(typeof(float), Enum.FLOAT);
-    public static readonly NbtType DOUBLE = new NbtType(typeof(double), Enum.DOUBLE);
-    public static readonly NbtType BYTE_ARRAY = new NbtType(typeof(byte[]), Enum.BYTE_ARRAY);
-    public static readonly NbtType STRING = new NbtType(typeof(string), Enum.STRING);
+        public static readonly NbtType BYTE = new NbtType(typeof(byte), Enum.BYTE);
+        public static readonly NbtType SHORT = new NbtType(typeof(short), Enum.SHORT);
+        public static readonly NbtType INT = new NbtType(typeof(int), Enum.INT);
+        public static readonly NbtType LONG = new NbtType(typeof(long), Enum.LONG);
+        public static readonly NbtType FLOAT = new NbtType(typeof(float), Enum.FLOAT);
+        public static readonly NbtType DOUBLE = new NbtType(typeof(double), Enum.DOUBLE);
+        public static readonly NbtType BYTE_ARRAY = new NbtType(typeof(byte[]), Enum.BYTE_ARRAY);
+        public static readonly NbtType STRING = new NbtType(typeof(string), Enum.STRING);
 
-    public static readonly NbtType LIST = new NbtType(typeof(NbtList), Enum.LIST);
-    public static readonly NbtType COMPOUND = new NbtType(typeof(NbtMap), Enum.COMPOUND);
-    public static readonly NbtType INT_ARRAY = new NbtType(typeof(int[]), Enum.INT_ARRAY);
-    public static readonly NbtType LONG_ARRAY = new NbtType(typeof(long[]), Enum.LONG_ARRAY);
+        public static readonly NbtType LIST = new NbtType(typeof(NbtList), Enum.LIST);
+        public static readonly NbtType COMPOUND = new NbtType(typeof(NbtMap), Enum.COMPOUND);
+        public static readonly NbtType INT_ARRAY = new NbtType(typeof(int[]), Enum.INT_ARRAY);
+        public static readonly NbtType LONG_ARRAY = new NbtType(typeof(long[]), Enum.LONG_ARRAY);
 
-    private static readonly NbtType[] BY_ID =
-            { END, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, BYTE_ARRAY, STRING, LIST, COMPOUND, INT_ARRAY, LONG_ARRAY};
+        private static readonly NbtType[] BY_ID =
+                { END, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, BYTE_ARRAY, STRING, LIST, COMPOUND, INT_ARRAY, LONG_ARRAY};
 
         private static readonly Dictionary<Type, NbtType> BY_CLASS = new();
 

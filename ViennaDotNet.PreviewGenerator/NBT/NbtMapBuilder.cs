@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ViennaDotNet.Common.Utils;
 
-namespace ViennaDotNet.PreviewGenerator.Utils.NBT
+namespace ViennaDotNet.PreviewGenerator.NBT
 {
     public class NbtMapBuilder : IDictionary<string, object>
     {
@@ -93,73 +93,73 @@ namespace ViennaDotNet.PreviewGenerator.Utils.NBT
         IEnumerator IEnumerable.GetEnumerator()
             => map.GetEnumerator();
 
-        public NbtMapBuilder putBoolean(String name, bool value)
+        public NbtMapBuilder putBoolean(string name, bool value)
         {
             Add(name, (byte)(value ? 1 : 0));
             return this;
         }
 
-        public NbtMapBuilder putByte(String name, byte value)
+        public NbtMapBuilder putByte(string name, byte value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putByteArray(String name, byte[] value)
+        public NbtMapBuilder putByteArray(string name, byte[] value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putDouble(String name, double value)
+        public NbtMapBuilder putDouble(string name, double value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putFloat(String name, float value)
+        public NbtMapBuilder putFloat(string name, float value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putIntArray(String name, int[] value)
+        public NbtMapBuilder putIntArray(string name, int[] value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putLongArray(String name, long[] value)
+        public NbtMapBuilder putLongArray(string name, long[] value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putInt(String name, int value)
+        public NbtMapBuilder putInt(string name, int value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putLong(String name, long value)
+        public NbtMapBuilder putLong(string name, long value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putShort(String name, short value)
+        public NbtMapBuilder putShort(string name, short value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putString(String name, String value)
+        public NbtMapBuilder putString(string name, string value)
         {
             Add(name, value);
             return this;
         }
 
-        public NbtMapBuilder putCompound(String name, NbtMap value)
+        public NbtMapBuilder putCompound(string name, NbtMap value)
         {
             Add(name, value);
             return this;
@@ -180,7 +180,7 @@ namespace ViennaDotNet.PreviewGenerator.Utils.NBT
             return this;
         }
 
-        public NbtMapBuilder rename(String oldName, String newName)
+        public NbtMapBuilder rename(string oldName, string newName)
         {
             if (TryGetValue(oldName, out object? o))
             {

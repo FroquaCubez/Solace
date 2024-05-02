@@ -6,8 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ViennaDotNet.Common.Utils;
+using ViennaDotNet.PreviewGenerator.NBT;
 using ViennaDotNet.PreviewGenerator.Utils;
-using ViennaDotNet.PreviewGenerator.Utils.NBT;
 
 namespace ViennaDotNet.PreviewGenerator.Registry
 {

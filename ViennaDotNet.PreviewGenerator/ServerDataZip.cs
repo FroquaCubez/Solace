@@ -1,5 +1,4 @@
-﻿using Cyotek.Data.Nbt;
-using Cyotek.Data.Nbt.Serialization;
+﻿using SharpNBT;
 using System;
 using System.Collections.Generic;
 using System.IO.Compression;
@@ -36,7 +35,7 @@ namespace ViennaDotNet.PreviewGenerator
             }
         }
 
-        public TagCompound getChunkNBT(int x, int z)
+        public CompoundTag getChunkNBT(int x, int z)
         {
             int regionX = x >> 5;
             int regionZ = z >> 5;
@@ -85,10 +84,9 @@ namespace ViennaDotNet.PreviewGenerator
             }
 
             using (MemoryStream tagStream = new MemoryStream(uncompressed))
+            using (TagReader tagReader = new TagReader(tagStream, FormatOptions.Java, false))
             {
-                // false because the stream should now be uncompressed
-                BinaryTagReader tagReader = new BinaryTagReader(tagStream, false);
-                TagCompound tag = tagReader.ReadDocument();
+                CompoundTag tag = tagReader.ReadCompound();
 
                 return tag;
             }
