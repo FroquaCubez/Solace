@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ViennaDotNet.Common
+﻿namespace ViennaDotNet.Common
 {
     public static class MathE
     {
@@ -14,7 +8,7 @@ namespace ViennaDotNet.Common
         private const float DegToRadSingle = PISingle / 180f;
         private const double DegToRadDouble = PIDouble / 180.0;
         private const float RadToDegSingle = 180f / PISingle;
-        private const double RadToDegDouble = 180.0 /PIDouble;
+        private const double RadToDegDouble = 180.0 / PIDouble;
 
         public static float ToRadians(float degrees)
             => degrees * DegToRadSingle;

@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography.Xml;
-using static ViennaDotNet.ApiServer.Types.Catalog.JournalCatalog;
+﻿using static ViennaDotNet.ApiServer.Types.Catalog.JournalCatalog;
 
 namespace ViennaDotNet.ApiServer.Types.Catalog
 {

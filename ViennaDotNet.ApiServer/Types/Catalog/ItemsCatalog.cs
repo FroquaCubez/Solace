@@ -1,9 +1,9 @@
-﻿using static ViennaDotNet.ApiServer.Types.Catalog.ItemsCatalog;
+﻿using System.Collections;
+using ViennaDotNet.ApiServer.Types.Common;
+using static ViennaDotNet.ApiServer.Types.Catalog.ItemsCatalog;
+using static ViennaDotNet.ApiServer.Types.Catalog.ItemsCatalog.EfficiencyCategory;
 using static ViennaDotNet.ApiServer.Types.Catalog.ItemsCatalog.Item;
 using static ViennaDotNet.ApiServer.Types.Catalog.ItemsCatalog.Item.ItemData;
-using static ViennaDotNet.ApiServer.Types.Catalog.ItemsCatalog.EfficiencyCategory;
-using System.Collections;
-using ViennaDotNet.ApiServer.Types.Common;
 
 namespace ViennaDotNet.ApiServer.Types.Catalog
 {

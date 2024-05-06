@@ -1,6 +1,5 @@
 ﻿using CommandLine;
 using Serilog;
-using System.Reflection.Emit;
 using ViennaDotNet.EventBus.Client;
 
 namespace ViennaDotNet.TappablesGenerator

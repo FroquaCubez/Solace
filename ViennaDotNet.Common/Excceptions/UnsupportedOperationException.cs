@@ -5,12 +5,12 @@
         public UnsupportedOperationException()
             : base()
         {
-            
+
         }
         public UnsupportedOperationException(string? message)
             : base(message)
         {
-            
+
         }
     }
 }

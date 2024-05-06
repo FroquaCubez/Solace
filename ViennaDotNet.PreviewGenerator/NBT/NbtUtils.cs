@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace ViennaDotNet.PreviewGenerator.NBT
 {
@@ -13,29 +9,47 @@ namespace ViennaDotNet.PreviewGenerator.NBT
 
         public static string toString(object o)
         {
-            if (o is Byte) {
+            if (o is Byte)
+            {
                 return ((byte)o) + "b";
-            } else if (o is short) {
+            }
+            else if (o is short)
+            {
                 return ((short)o) + "s";
-            } else if (o is int) {
+            }
+            else if (o is int)
+            {
                 return ((int)o) + "i";
-            } else if (o is long) {
+            }
+            else if (o is long)
+            {
                 return ((long)o) + "l";
-            } else if (o is float) {
+            }
+            else if (o is float)
+            {
                 return ((float)o) + "f";
-            } else if (o is double) {
+            }
+            else if (o is double)
+            {
                 return ((double)o) + "d";
-            } else if (o is byte[]) {
+            }
+            else if (o is byte[])
+            {
                 return "0x" + printHexBinary((byte[])o);
-            } else if (o is string) {
+            }
+            else if (o is string)
+            {
                 return "\"" + o + "\"";
-            } else if (o is int[] intAr) {
+            }
+            else if (o is int[] intAr)
+            {
                 List<string> joined = new();
                 foreach (int i in intAr)
                     joined.Add(i + "i");
 
                 return "[ " + string.Join(", ", joined) + " ]";
-            } else if (o is long[] longAr)
+            }
+            else if (o is long[] longAr)
             {
                 List<string> joined = new();
                 foreach (long l in longAr)

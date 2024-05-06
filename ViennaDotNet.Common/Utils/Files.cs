@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ViennaDotNet.Common.Utils
+﻿namespace ViennaDotNet.Common.Utils
 {
     public static class Files
     {
@@ -57,6 +50,6 @@ namespace ViennaDotNet.Common.Utils
             }
 
             return visitor.PostVisitDirectory != null ? visitor.PostVisitDirectory(path, null) : FileVisitResult.CONTINUE;
-        } 
+        }
     }
 }

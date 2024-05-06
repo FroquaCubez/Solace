@@ -1,6 +1,4 @@
-﻿using System.Reflection.Emit;
-
-namespace ViennaDotNet.DB.Models.Common
+﻿namespace ViennaDotNet.DB.Models.Common
 {
     public record Rewards(
         int rubies,

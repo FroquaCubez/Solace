@@ -1,8 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using static ViennaDotNet.ApiServer.Types.Catalog.BoostMetadata;
-using System.Reflection.Emit;
-using System.Xml.Linq;
-using System;
+﻿using static ViennaDotNet.ApiServer.Types.Catalog.BoostMetadata;
 
 namespace ViennaDotNet.ApiServer.Types.Catalog
 {

@@ -1,16 +1,14 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
+using Newtonsoft.Json;
 using System.Security.Claims;
-using ViennaDotNet.Common.Utils;
-using ViennaDotNet.DB.Models.Player;
-using ViennaDotNet.DB;
 using ViennaDotNet.ApiServer.Exceptions;
 using ViennaDotNet.ApiServer.Types.Inventory;
 using ViennaDotNet.ApiServer.Utils;
-using System.Linq;
-using Newtonsoft.Json;
+using ViennaDotNet.Common.Utils;
+using ViennaDotNet.DB;
+using ViennaDotNet.DB.Models.Player;
 
 namespace ViennaDotNet.ApiServer.Controllers
 {

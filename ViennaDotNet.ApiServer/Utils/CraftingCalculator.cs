@@ -9,7 +9,7 @@ namespace ViennaDotNet.ApiServer.Utils
     {
         public static State calculateState(long currentTime, CraftingSlot.ActiveJob activeJob, Catalog catalog)
         {
-            RecipesCatalog.CraftingRecipe recipe = catalog.recipesCatalog.crafting.Where(craftingRecipe=>craftingRecipe.id==activeJob.recipeId).First();
+            RecipesCatalog.CraftingRecipe recipe = catalog.recipesCatalog.crafting.Where(craftingRecipe => craftingRecipe.id == activeJob.recipeId).First();
 
             long roundDuration = TimeFormatter.ParseDuration(recipe.duration);
             int completedRounds = activeJob.finishedEarly ? activeJob.totalRounds : Math.Min((int)((currentTime - activeJob.startTime) / roundDuration), activeJob.totalRounds);

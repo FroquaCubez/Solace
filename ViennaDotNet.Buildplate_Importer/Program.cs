@@ -1,11 +1,8 @@
 ﻿using CommandLine;
 using Newtonsoft.Json;
 using Serilog;
-using System;
-using System.Buffers.Text;
 using System.IO.Compression;
 using System.Text;
-using Uma.Uuid;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.DB;
 using ViennaDotNet.DB.Models.Player;

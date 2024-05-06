@@ -1,6 +1,5 @@
-﻿using Serilog.Events;
+﻿using CommandLine;
 using Serilog;
-using CommandLine;
 
 namespace ViennaDotNet.EventBus.Server
 {

@@ -1,7 +1,6 @@
-﻿using Uma.Uuid;
-using ViennaDotNet.DB.Models.Player;
+﻿using ViennaDotNet.Common.Utils;
 using ViennaDotNet.DB;
-using ViennaDotNet.Common.Utils;
+using ViennaDotNet.DB.Models.Player;
 
 namespace ViennaDotNet.ApiServer.Utils
 {

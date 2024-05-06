@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ViennaDotNet.EventBus.Client
+﻿namespace ViennaDotNet.EventBus.Client
 {
     public sealed class Subscriber
     {
@@ -16,7 +9,7 @@ namespace ViennaDotNet.EventBus.Client
 
         private ISubscriberListener listener;
 
-       internal Subscriber(EventBusClient client, int channelId, string queueName, ISubscriberListener listener)
+        internal Subscriber(EventBusClient client, int channelId, string queueName, ISubscriberListener listener)
         {
             this.client = client;
             this.channelId = channelId;

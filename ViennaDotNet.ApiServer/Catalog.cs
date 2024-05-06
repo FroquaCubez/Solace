@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Serilog;
-using System.IO.Pipelines;
 using ViennaDotNet.ApiServer.Types.Catalog;
 
 namespace ViennaDotNet.ApiServer

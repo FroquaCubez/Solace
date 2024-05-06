@@ -1,6 +1,5 @@
 ﻿using CommandLine;
 using Serilog;
-using System;
 
 namespace ViennaDotNet.ObjectStore.Server
 {

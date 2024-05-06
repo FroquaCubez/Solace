@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Serilog;
-using System;
 using System.Security.Claims;
 using System.Text;
 using ViennaDotNet.ApiServer.Exceptions;
@@ -11,7 +10,6 @@ using ViennaDotNet.ApiServer.Types.Buildplates;
 using ViennaDotNet.ApiServer.Types.Common;
 using ViennaDotNet.ApiServer.Utils;
 using ViennaDotNet.DB;
-using ViennaDotNet.DB.Models.Player;
 using ViennaDotNet.ObjectStore.Client;
 using Buildplates = ViennaDotNet.DB.Models.Player.Buildplates;
 
@@ -214,10 +212,10 @@ namespace ViennaDotNet.ApiServer.Controllers
                     SurfaceOrientation.HORIZONTAL,
                     null,
                     null,    // TODO
-                    new BuildplateInstance.GameplayMetadata.ShutdownBehavior[] 
-                    { 
+                    new BuildplateInstance.GameplayMetadata.ShutdownBehavior[]
+                    {
                         BuildplateInstance.GameplayMetadata.ShutdownBehavior.ALL_PLAYERS_QUIT,
-                        BuildplateInstance.GameplayMetadata.ShutdownBehavior.HOST_PLAYER_QUITS 
+                        BuildplateInstance.GameplayMetadata.ShutdownBehavior.HOST_PLAYER_QUITS
                     },
                     new BuildplateInstance.GameplayMetadata.SnapshotOptions(
                         BuildplateInstance.GameplayMetadata.SnapshotOptions.SnapshotWorldStorage.BUILDPLATE,
@@ -230,8 +228,8 @@ namespace ViennaDotNet.ApiServer.Controllers
                                 true
                             ),
                         BuildplateInstance.GameplayMetadata.SnapshotOptions.SnapshotTriggerConditions.NONE,
-                        new BuildplateInstance.GameplayMetadata.SnapshotOptions.TriggerCondition[] 
-                        { 
+                        new BuildplateInstance.GameplayMetadata.SnapshotOptions.TriggerCondition[]
+                        {
                             BuildplateInstance.GameplayMetadata.SnapshotOptions.TriggerCondition.INTERVAL, BuildplateInstance.GameplayMetadata.SnapshotOptions.TriggerCondition.PLAYER_EXITS },
                         TimeFormatter.FormatDuration(30 * 1000)
                     ),

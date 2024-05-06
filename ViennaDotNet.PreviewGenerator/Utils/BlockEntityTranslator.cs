@@ -1,10 +1,5 @@
 ﻿using Serilog;
 using SharpNBT;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ViennaDotNet.PreviewGenerator.BlockEntity;
 using ViennaDotNet.PreviewGenerator.NBT;
 using ViennaDotNet.PreviewGenerator.Registry;
@@ -13,7 +8,7 @@ namespace ViennaDotNet.PreviewGenerator.Utils
 {
     public static class BlockEntityTranslator
     {
-    public static NbtMap? translateBlockEntity(JavaBlocks.BedrockMapping.BlockEntity blockEntityMapping, BlockEntityInfo? javaBlockEntityInfo)
+        public static NbtMap? translateBlockEntity(JavaBlocks.BedrockMapping.BlockEntity blockEntityMapping, BlockEntityInfo? javaBlockEntityInfo)
         {
             switch (blockEntityMapping.type)
             {
@@ -23,22 +18,22 @@ namespace ViennaDotNet.PreviewGenerator.Utils
                         builder.putString("id", "Bed");
                         builder.putByte("color", (((JavaBlocks.BedrockMapping.BedBlockEntity)blockEntityMapping).color) switch
                         {
-                            "white"=> 0,
-                            "orange"=> 1,
-                            "magenta"=> 2,
-                            "light_blue"=> 3,
-                            "yellow"=> 4,
-                            "lime"=> 5,
-                            "pink"=> 6,
-                            "gray"=> 7,
-                            "light_gray"=> 8,
-                            "cyan"=> 9,
-                            "purple"=> 10,
-                            "blue"=> 11,
-                            "brown"=> 12,
-                            "green"=> 13,
-                            "red"=> 14,
-                            "black"=> 15,
+                            "white" => 0,
+                            "orange" => 1,
+                            "magenta" => 2,
+                            "light_blue" => 3,
+                            "yellow" => 4,
+                            "lime" => 5,
+                            "pink" => 6,
+                            "gray" => 7,
+                            "light_gray" => 8,
+                            "cyan" => 9,
+                            "purple" => 10,
+                            "blue" => 11,
+                            "brown" => 12,
+                            "green" => 13,
+                            "red" => 14,
+                            "black" => 15,
                             _ => 0
                         });
                         return builder.build();

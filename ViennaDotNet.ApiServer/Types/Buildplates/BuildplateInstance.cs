@@ -1,10 +1,8 @@
-﻿using static ViennaDotNet.ApiServer.Types.Buildplates.BuildplateInstance;
-using System.Collections.Concurrent;
-using System.Net;
-using System.Runtime.Serialization;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Runtime.Serialization;
 using ViennaDotNet.ApiServer.Types.Common;
+using static ViennaDotNet.ApiServer.Types.Buildplates.BuildplateInstance;
 
 namespace ViennaDotNet.ApiServer.Types.Buildplates
 {

@@ -1,9 +1,6 @@
 ﻿using CommandLine;
-using CommandLine.Text;
 using Serilog;
-using ViennaDotNet.DB;
 using ViennaDotNet.EventBus.Client;
-using ViennaDotNet.ObjectStore.Client;
 
 namespace ViennaDotNet.Buildplate.Launcher
 {

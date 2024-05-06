@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ViennaDotNet.ObjectStore.Client
+﻿namespace ViennaDotNet.ObjectStore.Client
 {
     public class ObjectStoreClientException : Exception
     {

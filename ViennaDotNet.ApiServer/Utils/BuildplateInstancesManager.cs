@@ -1,13 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Serilog;
-using System;
-using System.Buffers.Text;
-using System.Collections.Generic;
-using System.Net;
-using Uma.Uuid;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.EventBus.Client;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ViennaDotNet.ApiServer.Utils
 {

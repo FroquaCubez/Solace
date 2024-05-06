@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.ResponseCompression;
 using Serilog;
 using Serilog.Events;
-using System.Transactions;
 using ViennaDotNet.ApiServer.Authentication;
 
 namespace ViennaDotNet.ApiServer

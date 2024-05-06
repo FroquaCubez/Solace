@@ -1,11 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.PreviewGenerator.NBT;
 using ViennaDotNet.PreviewGenerator.Utils;

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Formats.Asn1;
-using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using ViennaDotNet.Common.Utils;
+﻿using ViennaDotNet.Common.Utils;
 
 namespace ViennaDotNet.PreviewGenerator.NBT
 {

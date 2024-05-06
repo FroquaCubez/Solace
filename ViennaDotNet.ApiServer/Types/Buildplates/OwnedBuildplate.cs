@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System.Reflection;
 using System.Runtime.Serialization;
 
 namespace ViennaDotNet.ApiServer.Types.Buildplates

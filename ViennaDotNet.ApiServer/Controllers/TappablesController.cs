@@ -1,17 +1,14 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Security.Claims;
-using Uma.Uuid;
 using ViennaDotNet.ApiServer.Exceptions;
 using ViennaDotNet.ApiServer.Types.Common;
 using ViennaDotNet.ApiServer.Types.Tappables;
 using ViennaDotNet.ApiServer.Utils;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.DB;
-using ViennaDotNet.DB.Models.Common;
 using ViennaDotNet.DB.Models.Player;
 
 namespace ViennaDotNet.ApiServer.Controllers

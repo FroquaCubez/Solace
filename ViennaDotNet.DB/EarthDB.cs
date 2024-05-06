@@ -1,11 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Serilog;
-using System;
-using System.Diagnostics;
-using System.Transactions;
-using System.Xml.Linq;
 using ViennaDotNet.Common.Excceptions;
 using ViennaDotNet.Common.Utils;
 
@@ -272,7 +266,7 @@ namespace ViennaDotNet.DB
             public record Result(object Value, int version)
             {
             }
-            public record GenericResult<T>(T GValue, int version) 
+            public record GenericResult<T>(T GValue, int version)
                 : Result(GValue!, version)
             {
             }

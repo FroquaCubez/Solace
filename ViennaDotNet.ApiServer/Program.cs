@@ -1,15 +1,13 @@
-using Serilog.Events;
+using CommandLine;
 using Serilog;
+using Serilog.Events;
 using System.ComponentModel;
-using System;
 using Uma.Uuid;
+using ViennaDotNet.ApiServer.Utils;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.DB;
 using ViennaDotNet.EventBus.Client;
-using ViennaDotNet.ApiServer.Utils;
 using ViennaDotNet.ObjectStore.Client;
-using CommandLine;
-using ViennaDotNet.Common;
 
 namespace ViennaDotNet.ApiServer
 {
@@ -90,7 +88,7 @@ namespace ViennaDotNet.ApiServer
             }
             else
                 return;
-            
+
             Log.Information("Connecting to database");
             try
             {

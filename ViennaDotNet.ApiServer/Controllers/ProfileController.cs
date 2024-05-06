@@ -1,14 +1,14 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Serilog;
 using System.Security.Claims;
-using ViennaDotNet.DB.Models.Player;
-using ViennaDotNet.DB;
-using DatabaseException = ViennaDotNet.DB.EarthDB.DatabaseException;
-using Newtonsoft.Json;
 using ViennaDotNet.ApiServer.Utils;
 using ViennaDotNet.Common.Utils;
+using ViennaDotNet.DB;
+using ViennaDotNet.DB.Models.Player;
+using DatabaseException = ViennaDotNet.DB.EarthDB.DatabaseException;
 
 namespace ViennaDotNet.ApiServer.Controllers
 {

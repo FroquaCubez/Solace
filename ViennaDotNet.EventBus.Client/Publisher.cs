@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using ViennaDotNet.Common.Utils;
 
 namespace ViennaDotNet.EventBus.Client
@@ -113,7 +108,7 @@ namespace ViennaDotNet.EventBus.Client
                     currentPendingEventResult.SetResult(false);
                     currentPendingEventResult = null;
                 }
-                queuedEventResults.ForEach(completableFuture=>completableFuture.SetResult(false));
+                queuedEventResults.ForEach(completableFuture => completableFuture.SetResult(false));
                 queuedEventResults.Clear();
                 queuedEvents.Clear();
             }

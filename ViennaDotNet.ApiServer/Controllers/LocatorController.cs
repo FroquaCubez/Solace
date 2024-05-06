@@ -25,7 +25,7 @@ namespace ViennaDotNet.ApiServer.Controllers
                         new JProperty("production", new JObject(
                             new JProperty("serviceUri", baseServerIP),
                             new JProperty("cdnUri", baseServerIP + "/cdn"),
-                            new JProperty("playfabTitleId", "20CA2")    
+                            new JProperty("playfabTitleId", "20CA2")
                         ))
                     )),
                     new JProperty("supportedEnvironments", JToken.FromObject(new Dictionary<string, List<string>>() { { "2020.1217.02", new List<string>() { "production" } }, { "2020.1210.01", new List<string>() { "production" } } }))

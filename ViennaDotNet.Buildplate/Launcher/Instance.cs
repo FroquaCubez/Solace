@@ -720,7 +720,8 @@ namespace ViennaDotNet.Buildplate.Launcher
                 serverProcess = new ConsoleProcess(javaCmd, useShellExecute, !useShellExecute);
 
                 StreamWriter? writer = null;
-                if (!useShellExecute) {
+                if (!useShellExecute)
+                {
                     writer = new StreamWriter($"log_{instanceId}-server") { AutoFlush = true };
                     serverProcess.StandartTextReceived += (sender, e) => writer?.WriteLine(e.Data);
                     serverProcess.ErrorTextReceived += (sender, e) => writer?.WriteLine(e.Data);
@@ -769,7 +770,8 @@ namespace ViennaDotNet.Buildplate.Launcher
 
                 bridgeProcess = new ConsoleProcess(javaCmd, useShellExecute, !useShellExecute);
                 StreamWriter? writer = null;
-                if (!useShellExecute) { 
+                if (!useShellExecute)
+                {
                     writer = new StreamWriter($"log_{instanceId}-bridge") { AutoFlush = true };
                     bridgeProcess.StandartTextReceived += (sender, e) => writer?.WriteLine(e.Data);
                     bridgeProcess.ErrorTextReceived += (sender, e) => writer?.WriteLine(e.Data);

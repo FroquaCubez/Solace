@@ -1,11 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Serilog;
-using System;
-using System.Buffers.Text;
 using System.Text;
 using ViennaDotNet.ApiServer.Types.Catalog;
 using ViennaDotNet.Buildplate.Connector.Model;
-using ViennaDotNet.Common.Utils;
 using ViennaDotNet.DB;
 using ViennaDotNet.DB.Models.Common;
 using ViennaDotNet.DB.Models.Player;
@@ -284,14 +281,14 @@ namespace ViennaDotNet.ApiServer.Utils
                 true,
                 new PlayerConnectedResponse.Inventory(
                     inventory.getStackableItems()
-                    .Select(item=> new PlayerConnectedResponse.Inventory.Item(item.id, item.count ?? 0, null, 0))
+                    .Select(item => new PlayerConnectedResponse.Inventory.Item(item.id, item.count ?? 0, null, 0))
                     .Concat(
                         inventory.getNonStackableItems()
-                        .SelectMany((item)=>item.instances
-                            .Select(instance=> new PlayerConnectedResponse.Inventory.Item(item.id, 1, instance.instanceId, instance.wear))
+                        .SelectMany((item) => item.instances
+                            .Select(instance => new PlayerConnectedResponse.Inventory.Item(item.id, 1, instance.instanceId, instance.wear))
                         )
-                    ).Where(item=>item.count > 0).ToArray(),
-                    hotbar.items.Select(item=>item != null && item.count > 0 ? new PlayerConnectedResponse.Inventory.HotbarItem(item.uuid, item.count, item.instanceId) : null).ToArray()
+                    ).Where(item => item.count > 0).ToArray(),
+                    hotbar.items.Select(item => item != null && item.count > 0 ? new PlayerConnectedResponse.Inventory.HotbarItem(item.uuid, item.count, item.instanceId) : null).ToArray()
                 )
             );
 
