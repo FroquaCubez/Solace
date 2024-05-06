@@ -68,9 +68,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 }));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
 

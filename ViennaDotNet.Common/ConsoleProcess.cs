@@ -121,6 +121,8 @@ namespace ViennaDotNet.Common
                         if (!GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0))
                         {
                             Console.WriteLine($"Failed to send Ctrl+C to process");
+                            Process.TryStopGracefully();
+                            Process.WaitForExit();
                             return;
                         }
                         Process.WaitForExit();
@@ -129,10 +131,8 @@ namespace ViennaDotNet.Common
                     {
                         SetConsoleCtrlHandler(null, false);
                         FreeConsole();
-                        unchecked
-                        {
-                            AttachConsole((uint)-1); // get back our console
-                        }
+                        ConsoleUtils.CreateConsole(true);
+                        Console.WriteLine("Re allocated/attached console");
                     }
                     return;
                 }

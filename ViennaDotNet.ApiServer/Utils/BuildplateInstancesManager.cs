@@ -115,9 +115,9 @@ namespace ViennaDotNet.ApiServer.Utils
                                     completableFuture.SetResult(true);
                             }
                         }
-                        catch (Exception exception)
+                        catch (Exception ex)
                         {
-                            Log.Warning($"Bad start notification: {exception}");
+                            Log.Warning($"Bad start notification: {ex}");
                         }
                     }
                     break;

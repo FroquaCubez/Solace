@@ -36,9 +36,9 @@ namespace ViennaDotNet.ObjectStore.Client
                 socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                 socket.Connect(host, port);
             }
-            catch (IOException exception)
+            catch (SocketException ex)
             {
-                throw new ConnectException($"Could not create socket: {exception}");
+                throw new ConnectException($"Could not create socket: {ex}");
             }
 
             return new ObjectStoreClient(socket);
@@ -89,11 +89,11 @@ namespace ViennaDotNet.ObjectStore.Client
                         Thread.Sleep(0);
                     }
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }
-                catch (IOException)
+                catch (SocketException)
                 {
                     lock (lockObj)
                         closed = true;
@@ -174,7 +174,7 @@ namespace ViennaDotNet.ObjectStore.Client
                                 }
                             }
                         }
-                        else if (readLength == -1)
+                        else if (readLength == 0)
                             initiateClose();
                         else
                             throw new InvalidOperationException();
@@ -183,7 +183,7 @@ namespace ViennaDotNet.ObjectStore.Client
                     }
                 }
 
-                catch (IOException)
+                catch (SocketException)
                 {
                     lock (lockObj)
                         closed = true;
@@ -217,7 +217,7 @@ namespace ViennaDotNet.ObjectStore.Client
                     incomingThread.Join();
                     break;
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }
@@ -230,7 +230,7 @@ namespace ViennaDotNet.ObjectStore.Client
                     outgoingThread.Join();
                     break;
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }
@@ -244,17 +244,18 @@ namespace ViennaDotNet.ObjectStore.Client
 
             try
             {
-                socket.Close();
+                socket.Shutdown(SocketShutdown.Both);
             }
-            catch (IOException)
+            catch (SocketException)
             {
                 // empty
             }
+            finally
+            {
+                socket.Close();
+            }
 
-            // idc lmao
-#pragma warning disable SYSLIB0006 // Type or member is obsolete
-            outgoingThread.Abort();
-#pragma warning restore SYSLIB0006 // Type or member is obsolete
+            outgoingThread.Interrupt();
         }
 
         public TaskCompletionSource<object?> store(byte[] data)
@@ -466,7 +467,7 @@ namespace ViennaDotNet.ObjectStore.Client
                     outgoingMessageQueue.Add(message);
                     break;
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }

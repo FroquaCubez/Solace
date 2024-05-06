@@ -74,13 +74,12 @@ namespace ViennaDotNet.Buildplate.Launcher
 
                         StartRequest startRequest;
                         try
-
                         {
                             startRequest = JsonConvert.DeserializeObject<StartRequest>(request.data)!;
                         }
-                        catch (Exception exception)
+                        catch (Exception ex)
                         {
-                            Log.Warning($"Bad start request: {exception}");
+                            Log.Warning($"Bad start request: {ex}");
                             return null;
                         }
 
@@ -127,9 +126,9 @@ namespace ViennaDotNet.Buildplate.Launcher
                             previewRequest = JsonConvert.DeserializeObject<PreviewRequest>(request.data)!;
                             serverData = Convert.FromBase64String(previewRequest.serverDataBase64);
                         }
-                        catch (Exception exception)
+                        catch (Exception ex)
                         {
-                            Log.Warning($"Bad preview request: {exception}");
+                            Log.Warning($"Bad preview request: {ex}");
                             return null;
                         }
 
@@ -182,7 +181,7 @@ namespace ViennaDotNet.Buildplate.Launcher
                 {
                     Thread.Sleep(1000);
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }

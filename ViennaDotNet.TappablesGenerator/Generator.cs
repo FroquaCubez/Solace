@@ -46,7 +46,6 @@ namespace ViennaDotNet.TappablesGenerator
             int experiencePoints,
             string[][] possibleDropSets,
             Dictionary<string, TappableConfig.ItemCount> possibleItemCount
-
         )
         {
             [JsonConverter(typeof(StringEnumConverter))]
@@ -88,12 +87,13 @@ namespace ViennaDotNet.TappablesGenerator
                 this.tappableConfigs = tappableConfigs.ToArray();
                 totalWeight = tappableConfigs.Select(tappableConfig => tappableConfig.rarity.GetWeight()).Sum();
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Fatal($"Failed to load tappable generator data: {exception}");
+                Log.Fatal($"Failed to load tappable generator data: {ex}");
                 Environment.Exit(1);
                 throw new InvalidOperationException();
             }
+            Log.Information("Loaded tappable generator data");
 
             if (tappableConfigs.Length == 0)
             {
@@ -108,7 +108,6 @@ namespace ViennaDotNet.TappablesGenerator
                     Log.Warning($"Tappable config {tappableConfig.tappableID} has no drop sets");
 
                 tappableConfig.possibleDropSets
-                     //.flatMap(Arrays::stream).
                      .SelectMany(a => a)
                      .ForEach(itemId =>
                      {

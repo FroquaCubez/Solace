@@ -14,8 +14,6 @@ namespace ViennaDotNet.EventBus.Client
 {
     public class EventBusClient
     {
-        //public const int Timeout = 15 * 1000;
-
         public static EventBusClient create(string connectionString)
         {
             string[] parts = connectionString.Split(':', 2);
@@ -36,16 +34,12 @@ namespace ViennaDotNet.EventBus.Client
             Socket socket;
             try
             {
-                socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
-                {
-                    //ReceiveTimeout = Timeout,
-                    //SendTimeout = Timeout
-                };
+                socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                 socket.Connect(host, port);
             }
-            catch (IOException exception)
+            catch (SocketException ex)
             {
-                throw new ConnectException("Could not create socket", exception);
+                throw new ConnectException("Could not create socket", ex);
             }
 
             return new EventBusClient(socket);
@@ -107,11 +101,11 @@ namespace ViennaDotNet.EventBus.Client
                         sleepCounter++;
                     }
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }
-                catch (IOException)
+                catch (SocketException)
                 {
                     lockObj.EnterWriteLock();
                     error = true;
@@ -171,7 +165,7 @@ namespace ViennaDotNet.EventBus.Client
                             }
                             byteArrayOutputStream.Write(readBuffer, startOffset, readLength - startOffset);
                         }
-                        else if (readLength == -1)
+                        else if (readLength == 0)
                             break;
                         else
                             throw new InvalidOperationException();
@@ -187,8 +181,7 @@ namespace ViennaDotNet.EventBus.Client
                         sleepCounter++;
                     }
                 }
-
-                catch (IOException)
+                catch (SocketException)
                 {
                     lockObj.EnterWriteLock();
                     error = true;
@@ -224,7 +217,7 @@ namespace ViennaDotNet.EventBus.Client
                     incomingThread.Join();
                     break;
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }
@@ -237,7 +230,7 @@ namespace ViennaDotNet.EventBus.Client
                     outgoingThread.Join();
                     break;
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }
@@ -254,16 +247,18 @@ namespace ViennaDotNet.EventBus.Client
 
             try
             {
-                socket.Close();
+                socket.Shutdown(SocketShutdown.Both);
             }
-            catch (IOException)
+            catch (SocketException)
             {
                 // empty
             }
+            finally
+            {
+                socket.Close();
+            }
 
-#pragma warning disable SYSLIB0006 // Type or member is obsolete
-            outgoingThread.Abort();
-#pragma warning restore SYSLIB0006 // Type or member is obsolete
+            outgoingThread.Interrupt();
         }
 
         public Publisher addPublisher()
@@ -407,7 +402,7 @@ namespace ViennaDotNet.EventBus.Client
                     outgoingMessageQueue.Add(channelId + " " + message + "\n");
                     break;
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     // empty
                 }

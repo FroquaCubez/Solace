@@ -13,8 +13,6 @@ namespace ViennaDotNet.EventBus.Server
 {
     public class NetworkServer
     {
-        //public const int Timeout = 15 * 1000;
-
         private readonly Server server;
         private readonly TcpListener serverSocket;
 
@@ -22,8 +20,6 @@ namespace ViennaDotNet.EventBus.Server
         {
             this.server = server;
             serverSocket = new TcpListener(IPAddress.Loopback, port);
-            //serverSocket.Server.ReceiveTimeout = Timeout;
-            //serverSocket.Server.SendTimeout = Timeout;
             serverSocket.Start();
             Log.Information($"Created server on port {port}");
         }
@@ -41,9 +37,9 @@ namespace ViennaDotNet.EventBus.Server
                     Connection connection = new Connection(this, socket);
                     new Thread(connection.run).Start();
                 }
-                catch (IOException exception)
+                catch (SocketException ex)
                 {
-                    Log.Warning($"Exception while accepting connection: {exception}");
+                    Log.Warning($"Exception while accepting connection: {ex}");
                 }
             }
         }
@@ -98,15 +94,15 @@ namespace ViennaDotNet.EventBus.Server
 
                             byteArrayOutputStream.Write(readBuffer, startOffset, readLength - startOffset);
                         }
-                        else if (readLength == -1)
+                        else if (readLength == 0)
                             close = true;
-                        //else
-                        //    throw new InvalidOperationException();
+                        else
+                            throw new InvalidOperationException();
                     }
                 }
-                catch (SocketException exception)
+                catch (SocketException ex)
                 {
-                    Log.Warning($"Exception while reading socket: {exception}");
+                    Log.Warning($"Exception while reading socket: {ex}");
                 }
                 handleClose();
             }
@@ -119,16 +115,20 @@ namespace ViennaDotNet.EventBus.Server
                     {
                         socket.Send(Encoding.ASCII.GetBytes(message + "\n"));
                     }
-                    catch (IOException exception)
+                    catch (SocketException ex)
                     {
-                        Log.Warning($"Exception while sending: {exception}");
+                        Log.Warning($"Exception while sending: {ex}");
                         try
                         {
-                            socket.Close();
+                            socket.Shutdown(SocketShutdown.Both);
                         }
-                        catch (IOException exception1)
+                        catch (SocketException shutdownEx)
                         {
-                            Log.Warning($"Exception while closing socket: {exception1}");
+                            Log.Warning($"Exception while shutting down socket: {shutdownEx}");
+                        }
+                        finally
+                        {
+                            socket.Close();
                         }
                     }
                 }
@@ -557,7 +557,7 @@ namespace ViennaDotNet.EventBus.Server
             private void error()
             {
                 _error = true;
-                pendingResponses.Values.ForEach(completableFuture=>completableFuture.SetResult(null));
+                pendingResponses.Values.ForEach(completableFuture => completableFuture.SetResult(null));
                 pendingResponses.Clear();
                 sendMessage("ERR");
             }

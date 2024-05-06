@@ -11,7 +11,7 @@ namespace ViennaDotNet.Buildplate.Launcher
     public sealed class PreviewGenerator
     {
         private readonly string javaCmd;
-	private readonly FileInfo fountainJar;
+        private readonly FileInfo fountainJar;
 
         public PreviewGenerator(string javaCmd, string fountainJar)
         {
@@ -26,9 +26,10 @@ namespace ViennaDotNet.Buildplate.Launcher
             {
                 using (MemoryStream ms = new MemoryStream(serverData))
                     previewString = ViennaDotNet.PreviewGenerator.Generator.Generate(ms);
-            } catch (Exception exception)
+            }
+            catch (Exception ex)
             {
-                Log.Error($"Error while generating buildplate preview: {exception}");
+                Log.Error($"Error while generating buildplate preview: {ex}");
                 return null;
             }
 
@@ -37,9 +38,9 @@ namespace ViennaDotNet.Buildplate.Launcher
             {
                 previewObject = JsonConvert.DeserializeObject<Dictionary<string, object>>(previewString)!;
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Error($"Error while processing buildplate preview generator response: {exception}");
+                Log.Error($"Error while processing buildplate preview generator response: {ex}");
                 return null;
             }
 
@@ -49,6 +50,7 @@ namespace ViennaDotNet.Buildplate.Launcher
 
             string previewBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(previewJson));
 
+            Log.Information("Preview generated");
             return previewBase64;
         }
     }

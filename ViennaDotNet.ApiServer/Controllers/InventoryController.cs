@@ -42,9 +42,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 hotbarModel = (Hotbar)results.Get("hotbar").Value;
                 journalModel = (Journal)results.Get("journal").Value;
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
 
             Dictionary<string, object> inventory = new();

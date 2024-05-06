@@ -32,9 +32,9 @@ namespace ViennaDotNet.TappablesGenerator
                     {
                         activeTileNotification = JsonConvert.DeserializeObject<ActiveTileNotification>(request.data)!;
                     }
-                    catch (Exception exception)
+                    catch (Exception ex)
                     {
-                        Log.Error($"Could not deserialise active tile notification event: {exception}");
+                        Log.Error($"Could not deserialise active tile notification event: {ex}");
                         return null;
                     }
 

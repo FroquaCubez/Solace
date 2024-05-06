@@ -24,9 +24,9 @@ namespace ViennaDotNet.ObjectStore.Server
                 Log.Information($"Stored new object {id}");
                 return id;
             }
-            catch (DataStore.DataStoreException exception)
+            catch (DataStore.DataStoreException ex)
             {
-                Log.Error("Could not store object", exception);
+                Log.Error("Could not store object", ex);
                 return null;
             }
         }
@@ -42,9 +42,9 @@ namespace ViennaDotNet.ObjectStore.Server
 
                 return data;
             }
-            catch (DataStore.DataStoreException exception)
+            catch (DataStore.DataStoreException ex)
             {
-                Log.Error($"Could not load object {id}: {exception}");
+                Log.Error($"Could not load object {id}: {ex}");
                 return null;
             }
         }

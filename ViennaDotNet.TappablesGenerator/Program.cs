@@ -1,5 +1,4 @@
-﻿using CliUtils;
-using CliUtils.Exceptions;
+﻿using CommandLine;
 using Serilog;
 using System.Reflection.Emit;
 using ViennaDotNet.EventBus.Client;
@@ -8,6 +7,13 @@ namespace ViennaDotNet.TappablesGenerator
 {
     internal static class Program
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        class Options
+        {
+            [Option("eventbus", Default = "localhost:5532", Required = false, HelpText = "Event bus address")]
+            public string EventBusConnectionString { get; set; }
+        }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static void Main(string[] args)
         {
             var log = new LoggerConfiguration()
@@ -18,37 +24,39 @@ namespace ViennaDotNet.TappablesGenerator
 
             Log.Logger = log;
 
-            Options options = new Options();
-            options.addOption(Option.builder()
-                .Option("eventbus")
-                .LongOpt("eventbus")
-                .HasArg()
-                .ArgName("eventbus")
-                .Desc("Event bus address, defaults to localhost:5532")
-                .Build());
-            CommandLine commandLine;
-            string eventBusConnectionString;
-            try
+            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
             {
-                commandLine = new DefaultParser().parse(options, args);
-                eventBusConnectionString = commandLine.hasOption("eventbus") ? commandLine.getOptionValue("eventbus")! : "localhost:5532";
-            }
-            catch (ParseException exception)
-            {
-                Log.Fatal(exception.ToString());
+                Log.Fatal($"Unhandeled exception: {e.ExceptionObject}");
                 Environment.Exit(1);
+            };
+
+            ParserResult<Options> res = Parser.Default.ParseArguments<Options>(args);
+
+            Options options;
+            if (res is Parsed<Options> parsed)
+                options = parsed.Value;
+            else if (res is NotParsed<Options> notParsed)
+            {
+                if (res.Errors.Any(error => error is HelpRequestedError))
+                    Environment.Exit(2);
+                else if (res.Errors.Any(error => error is VersionRequestedError))
+                    Environment.Exit(3);
+                else
+                    Environment.Exit(1);
                 return;
             }
+            else
+                return;
 
             Log.Information("Connecting to event bus");
             EventBusClient eventBusClient;
             try
             {
-                eventBusClient = EventBusClient.create(eventBusConnectionString);
+                eventBusClient = EventBusClient.create(options.EventBusConnectionString);
             }
-            catch (EventBusClientException exception)
+            catch (EventBusClientException ex)
             {
-                Log.Fatal($"Could not connect to event bus: {exception}");
+                Log.Fatal($"Could not connect to event bus: {ex}");
                 Environment.Exit(1);
                 return;
             }

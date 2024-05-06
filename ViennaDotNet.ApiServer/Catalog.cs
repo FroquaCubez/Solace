@@ -42,9 +42,9 @@ namespace ViennaDotNet.ApiServer
 
                 Log.Information("Loaded catalog data");
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Fatal("Failed to load catalog data", exception);
+                Log.Fatal($"Failed to load catalog data: {ex}");
                 Environment.Exit(1);
                 throw new InvalidOperationException();
             }

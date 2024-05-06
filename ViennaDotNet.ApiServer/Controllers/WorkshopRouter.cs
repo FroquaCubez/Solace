@@ -73,9 +73,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 craftingSlotsResult = results.GetGeneric<CraftingSlots>("crafting");
                 smeltingSlotsResult = results.GetGeneric<SmeltingSlots>("smelting");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
 
             Dictionary<string, object> workshop = new();
@@ -115,12 +115,11 @@ namespace ViennaDotNet.ApiServer.Controllers
                 EarthDB.Results.GenericResult<CraftingSlots> craftingSlotsResult = results.GetGeneric<CraftingSlots>("crafting");
 
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(craftingSlotModelToResponseIncludingLocked(craftingSlotsResult.GValue.slots[slotIndex - 1], requestStartedOn, craftingSlotsResult.version, slotIndex)));
-                Console.WriteLine($"Status response: {resp}");
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
         [HttpGet]
@@ -144,9 +143,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(this.smeltingSlotModelToResponseIncludingLocked(smeltingSlotsResult.GValue.slots[slotIndex - 1], requestStartedOn, smeltingSlotsResult.version, slotIndex)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
 
@@ -238,12 +237,11 @@ namespace ViennaDotNet.ApiServer.Controllers
                     .Execute(earthDB);
 
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(new Dictionary<string, object>(), new EarthApiResponse.Updates(results)));
-                Console.WriteLine($"Start response: {resp}");
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
         [HttpPost]
@@ -377,9 +375,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(new Dictionary<string, object>(), new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
 
@@ -431,9 +429,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 }, new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
         [HttpPost]
@@ -494,9 +492,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 }, new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
 
@@ -568,9 +566,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(craftingSlotModelToResponse(craftingSlotsResult.GValue.slots[slotIndex - 1], requestStartedOn, craftingSlotsResult.version), new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
         [HttpPost]
@@ -650,9 +648,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(smeltingSlotModelToResponse(smeltingSlotsResult.GValue.slots[slotIndex - 1], requestStartedOn, smeltingSlotsResult.version), new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
 
@@ -717,9 +715,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(new SplitRubies(profile.rubies.purchased, profile.rubies.earned), new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
         [HttpPost]
@@ -784,9 +782,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(new SplitRubies(profile.rubies.purchased, profile.rubies.earned), new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
 
@@ -890,9 +888,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(new Dictionary<string, object>(), new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
         [HttpPost]
@@ -942,9 +940,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 string resp = JsonConvert.SerializeObject(new EarthApiResponse(new Dictionary<string, object>(), new EarthApiResponse.Updates(results)));
                 return Content(resp, "application/json");
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
         }
 

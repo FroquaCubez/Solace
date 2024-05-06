@@ -140,9 +140,9 @@ namespace ViennaDotNet.DB
                     transaction.Connection?.Close();
                     return results;
                 }
-                catch (SqliteException exception)
+                catch (SqliteException ex)
                 {
-                    throw new DatabaseException(exception);
+                    throw new DatabaseException(ex);
                 }
             }
 
@@ -208,9 +208,9 @@ namespace ViennaDotNet.DB
                                 var value = Activator.CreateInstance(entry.valueType)!;
                                 results.getValues[entry.type] = new Results.Result(value, 1);
                             }
-                            catch (Exception exception)
+                            catch (Exception ex)
                             {
-                                throw new DatabaseException(exception);
+                                throw new DatabaseException(ex);
                             }
                         }
                     }

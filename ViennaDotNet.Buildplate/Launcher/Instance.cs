@@ -2,27 +2,13 @@
 using Cyotek.Data.Nbt.Serialization;
 using Newtonsoft.Json;
 using Serilog;
-using Serilog.Core;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Formats.Asn1;
-using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using ViennaDotNet.Buildplate.Connector.Model;
 using ViennaDotNet.Common;
 using ViennaDotNet.Common.Utils;
-using ViennaDotNet.DB;
-using ViennaDotNet.DB.Models.Player;
 using ViennaDotNet.EventBus.Client;
-using ViennaDotNet.ObjectStore.Client;
 
 namespace ViennaDotNet.Buildplate.Launcher
 {
@@ -134,7 +120,6 @@ namespace ViennaDotNet.Buildplate.Launcher
 
                 try
                 {
-
                     serverWorkDir = setupServerFiles(serverData);
                     if (serverWorkDir == null)
                     {
@@ -142,9 +127,9 @@ namespace ViennaDotNet.Buildplate.Launcher
                         return;
                     }
                 }
-                catch (IOException exception)
+                catch (IOException ex)
                 {
-                    Log.Error($"Could not set up files for server: {exception}");
+                    Log.Error($"Could not set up files for server: {ex}");
                     return;
                 }
                 try
@@ -156,12 +141,11 @@ namespace ViennaDotNet.Buildplate.Launcher
                         return;
                     }
                 }
-                catch (IOException exception)
+                catch (IOException ex)
                 {
-                    Log.Error("Could not set up files for bridge", exception);
+                    Log.Error("Could not set up files for bridge", ex);
                     return;
                 }
-
 
                 Log.Information("Running server");
 
@@ -214,7 +198,7 @@ namespace ViennaDotNet.Buildplate.Launcher
                             exitCode = waitForProcess(bridgeProcess.Process);
                             Monitor.Enter(subprocessLock);
                             bridgeProcess = null;
-                            Log.Information("Bridge has finished with exit code {}", exitCode);
+                            Log.Information($"Bridge has finished with exit code {exitCode}");
                         }
                     }
                     else
@@ -222,9 +206,9 @@ namespace ViennaDotNet.Buildplate.Launcher
                 }
                 Monitor.Exit(subprocessLock);
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Error($"Unhandled exception: {exception}");
+                Log.Error($"Unhandled exception: {ex}");
             }
             finally
             {
@@ -349,9 +333,9 @@ namespace ViennaDotNet.Buildplate.Launcher
             {
                 return JsonConvert.DeserializeObject<T>(str);
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Error($"Failed to decode event bus message JSON: {exception}");
+                Log.Error($"Failed to decode event bus message JSON: {ex}");
                 beginShutdown();
                 return default;
             }
@@ -385,9 +369,9 @@ namespace ViennaDotNet.Buildplate.Launcher
                 else
                     return default;
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Error("Event bus request failed", exception);
+                Log.Error("Event bus request failed", ex);
                 beginShutdown();
                 return default;
             }
@@ -411,9 +395,9 @@ namespace ViennaDotNet.Buildplate.Launcher
                 else
                     return default;
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Error($"Event bus request failed: {exception}");
+                Log.Error($"Event bus request failed: {ex}");
                 beginShutdown();
                 return default;
             }
@@ -470,6 +454,7 @@ namespace ViennaDotNet.Buildplate.Launcher
             string serverProperties = new StringBuilder()
                 .Append("online-mode=false\n")
                 .Append("enforce-secure-profile=false\n")
+                .Append("sync-chunk-writes=false\n")
                 .Append("spawn-protection=0\n")
                 .Append($"server-port={serverInternalPort}\n")
                 .Append($"fountain-connector-plugin-jar={connectorPluginJar.FullName.Replace('\\', '/')}\n")
@@ -550,9 +535,9 @@ namespace ViennaDotNet.Buildplate.Launcher
                         {
                             dstPath = Path.Combine(dst, Path.GetRelativePath(src, path));
                         }
-                        catch (ArgumentException exception)
+                        catch (ArgumentException ex)
                         {
-                            throw new IOException(null, exception);
+                            throw new IOException(null, ex);
                         }
                         Directory.CreateDirectory(dstPath);
                         return FileVisitResult.CONTINUE;
@@ -564,24 +549,24 @@ namespace ViennaDotNet.Buildplate.Launcher
                         {
                             dstPath = Path.Combine(dst, Path.GetRelativePath(src, path));
                         }
-                        catch (ArgumentException exception)
+                        catch (ArgumentException ex)
                         {
-                            throw new IOException(null, exception);
+                            throw new IOException(null, ex);
                         }
                         File.Copy(path, dstPath);
                         return FileVisitResult.CONTINUE;
                     },
-                    (path, exception) =>
+                    (path, ex) =>
                     {
-                        if (exception != null)
-                            throw exception;
+                        if (ex != null)
+                            throw ex;
 
                         return FileVisitResult.CONTINUE;
                     },
-                    (path, exception) =>
+                    (path, ex) =>
                     {
-                        if (exception != null)
-                            throw exception;
+                        if (ex != null)
+                            throw ex;
 
                         return FileVisitResult.CONTINUE;
                     }
@@ -686,26 +671,26 @@ namespace ViennaDotNet.Buildplate.Launcher
                         File.Delete(path);
                         return FileVisitResult.CONTINUE;
                     },
-                    (path, exception) =>
+                    (path, ex) =>
                     {
-                        if (exception != null)
-                            throw exception;
+                        if (ex != null)
+                            throw ex;
 
                         return FileVisitResult.CONTINUE;
                     },
-                    (path, exception) =>
+                    (path, ex) =>
                     {
-                        if (exception != null)
-                            throw exception;
+                        if (ex != null)
+                            throw ex;
 
                         Directory.Delete(path);
                         return FileVisitResult.CONTINUE;
                     }
                 ));
             }
-            catch (IOException exception)
+            catch (IOException ex)
             {
-                Log.Error($"Exception while cleaning up runtime directory: {exception}");
+                Log.Error($"Exception while cleaning up runtime directory: {ex}");
             }
         }
 
@@ -743,7 +728,6 @@ namespace ViennaDotNet.Buildplate.Launcher
 
                 serverProcess.ProcessExited += (sender, e) =>
                 {
-                    Log.Information("SERVER LOG CLOSED");
                     writer?.Close();
                     writer = null;
                 };
@@ -752,9 +736,9 @@ namespace ViennaDotNet.Buildplate.Launcher
 
                 Log.Information($"Server process started, PID {serverProcess.Id}");
             }
-            catch (IOException exception)
+            catch (IOException ex)
             {
-                Log.Error($"Could not start server process: {exception}");
+                Log.Error($"Could not start server process: {ex}");
             }
 
             Monitor.Exit(subprocessLock);
@@ -793,7 +777,6 @@ namespace ViennaDotNet.Buildplate.Launcher
 
                 bridgeProcess.ProcessExited += (sender, e) =>
                 {
-                    Log.Information("BRIDGE LOG CLOSED");
                     writer?.Close();
                     writer = null;
 
@@ -818,11 +801,11 @@ namespace ViennaDotNet.Buildplate.Launcher
                     "-connectorPluginArg", eventBusConnectionString + "/" + eventBusQueueName
                 });
 
-                Log.Information($"Bridge process started, PID {bridgeProcess.Id/*.pid()*/}");
+                Log.Information($"Bridge process started, PID {bridgeProcess.Id}");
             }
-            catch (IOException exception)
+            catch (IOException ex)
             {
-                Log.Error($"Could not start bridge process: {exception}");
+                Log.Error($"Could not start bridge process: {ex}");
             }
 
             Monitor.Exit(subprocessLock);
@@ -876,7 +859,7 @@ namespace ViennaDotNet.Buildplate.Launcher
                     exitCode = process.ExitCode;
                     break;
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     continue;
                 }
@@ -886,14 +869,13 @@ namespace ViennaDotNet.Buildplate.Launcher
 
         public void waitForReady()
         {
-            Log.Debug("Waiting for ready");
             for (; ; )
             {
                 try
                 {
                     if (!readyFuture.Task.Wait(1000))
                         throw new TimeoutException();
-                    Log.Debug("Ready");
+
                     break;
                 }
                 catch (AggregateException ex) when (ex.InnerExceptions.Any(e => e is TaskCanceledException))
@@ -926,7 +908,7 @@ namespace ViennaDotNet.Buildplate.Launcher
                     thread.Join();
                     break;
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     continue;
                 }

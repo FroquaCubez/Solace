@@ -42,9 +42,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                     .Execute(earthDB);
                 buildplatesModel = (Buildplates)results.Get("buildplates").Value;
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
 
             // not null is ensured in .Where
@@ -99,9 +99,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                     .Execute(earthDB);
                 buildplate = ((Buildplates)results.Get("buildplates").Value).getBuildplate(buildplateId);
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
 
             if (buildplate is null)
@@ -120,8 +120,6 @@ namespace ViennaDotNet.ApiServer.Controllers
             BuildplateInstance buildplateInstance = instanceInfoToApiResponse(buildplate, instanceInfo);
 
             string resp = JsonConvert.SerializeObject(new EarthApiResponse(buildplateInstance));
-            Log.Debug("Sending instance :) ... get ready to crash ...");
-            Console.WriteLine($"Ins data: {resp}");
             return Content(resp, "application/json");
         }
 
@@ -146,9 +144,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                         .Execute(earthDB);
                 buildplate = ((Buildplates)results.Get("buildplates").Value).getBuildplate(instanceInfo.buildplateId);
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                throw new ServerErrorException(exception);
+                throw new ServerErrorException(ex);
             }
 
             if (buildplate is null)
@@ -170,12 +168,9 @@ namespace ViennaDotNet.ApiServer.Controllers
                 {
                     try
                     {
-                        // TODO: Thread.Sleep instead?
-                        //await Task.Delay(1000);
                         Thread.Sleep(1000);
-                        Log.Debug("Sleeeeeep...");
                     }
-                    catch (ThreadAbortException)
+                    catch (ThreadInterruptedException)
                     {
                         continue;
                     }
@@ -183,12 +178,10 @@ namespace ViennaDotNet.ApiServer.Controllers
                     waitCount++;
                 }
             }
-            while (!instanceInfo1.ready && waitCount < 40);
-            Log.Debug("Ready!!!");
+            while (!instanceInfo1.ready && waitCount < 35);
             BuildplateInstance buildplateInstance = instanceInfoToApiResponse(buildplate, instanceInfo1);
 
             string resp = JsonConvert.SerializeObject(new EarthApiResponse(buildplateInstance));
-            Log.Debug($"Response: {resp}");
             return Content(resp, "application/json");
         }
 

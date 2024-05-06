@@ -46,7 +46,7 @@ namespace ViennaDotNet.TappablesGenerator
                 {
                     Thread.Sleep(Math.Max(0, (int)(nextTime - U.CurrentTimeMillis())));
                 }
-                catch (ThreadAbortException)
+                catch (ThreadInterruptedException)
                 {
                     Log.Information("Spawn thread was interrupted, exiting");
                     break;

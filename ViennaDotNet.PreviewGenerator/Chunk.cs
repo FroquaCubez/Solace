@@ -21,9 +21,9 @@ namespace ViennaDotNet.PreviewGenerator
             {
                 return new Chunk(chunkTag);
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Error($"Could not read chunk: {exception}");
+                Log.Error($"Could not read chunk: {ex}");
                 return null;
             }
         }

@@ -96,9 +96,9 @@ namespace ViennaDotNet.ApiServer.Utils
                             if (tappable is null)
                                 throw new Exception("tappable is null");
                         }
-                        catch (Exception exception)
+                        catch (Exception ex)
                         {
-                            Log.Error("Could not deserialise tappable spawn event", exception);
+                            Log.Error("Could not deserialise tappable spawn event", ex);
                             break;
                         }
                         addTappable(tappable);

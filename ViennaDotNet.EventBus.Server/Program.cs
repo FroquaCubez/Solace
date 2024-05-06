@@ -1,12 +1,16 @@
 ﻿using Serilog.Events;
 using Serilog;
-using CliUtils.Exceptions;
-using CliUtils;
+using CommandLine;
 
 namespace ViennaDotNet.EventBus.Server
 {
     internal static class Program
     {
+        class Options
+        {
+            [Option("port", Default = 5532, Required = false, HelpText = "Port to listen on")]
+            public int Port { get; set; }
+        }
         static void Main(string[] args)
         {
             var log = new LoggerConfiguration()
@@ -17,36 +21,38 @@ namespace ViennaDotNet.EventBus.Server
 
             Log.Logger = log;
 
-            Options options = new Options();
-            options.addOption(Option.builder()
-                .Option("port")
-                .LongOpt("port")
-                .HasArg()
-                .ArgName("port")
-                .Desc("Port to listen on, defaults to 5532")
-                .Build());
-            CommandLine commandLine;
-            int port;
-            try
+            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
             {
-                commandLine = new DefaultParser().parse(options, args);
-                port = commandLine.hasOption("port") ? commandLine.getParsedOptionValue<int>("port") : 5532;
-            }
-            catch (ParseException exception)
-            {
-                Log.Fatal(exception.ToString());
+                Log.Fatal($"Unhandeled exception: {e.ExceptionObject}");
                 Environment.Exit(1);
+            };
+
+            ParserResult<Options> res = Parser.Default.ParseArguments<Options>(args);
+
+            Options options;
+            if (res is Parsed<Options> parsed)
+                options = parsed.Value;
+            else if (res is NotParsed<Options> notParsed)
+            {
+                if (res.Errors.Any(error => error is HelpRequestedError))
+                    Environment.Exit(2);
+                else if (res.Errors.Any(error => error is VersionRequestedError))
+                    Environment.Exit(3);
+                else
+                    Environment.Exit(1);
                 return;
             }
+            else
+                return;
 
             NetworkServer server;
             try
             {
-                server = new NetworkServer(new Server(), port);
+                server = new NetworkServer(new Server(), options.Port);
             }
-            catch (IOException exception)
+            catch (IOException ex)
             {
-                Log.Fatal(string.Empty, exception);
+                Log.Fatal(ex.ToString());
                 Environment.Exit(1);
                 return;
             }

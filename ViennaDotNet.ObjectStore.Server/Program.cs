@@ -1,12 +1,21 @@
-﻿using Serilog;
+﻿using CommandLine;
+using Serilog;
 using System;
-using CliUtils;
-using CliUtils.Exceptions;
 
 namespace ViennaDotNet.ObjectStore.Server
 {
     internal static class Program
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        class Options
+        {
+            [Option("dataDir", Default = "data", Required = false, HelpText = "Directory where data is stored")]
+            public string DataDir { get; set; }
+
+            [Option("port", Default = 5396, Required = false, HelpText = "Port to listen on")]
+            public int Port { get; set; }
+        }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static void Main(string[] args)
         {
             var log = new LoggerConfiguration()
@@ -17,42 +26,34 @@ namespace ViennaDotNet.ObjectStore.Server
 
             Log.Logger = log;
 
-            Options options = new Options();
-            options.addOption(Option.builder()
-                .Option("dataDir")
-                .LongOpt("dataDir")
-                .HasArg()
-                .ArgName("dir")
-                .Desc("Directory where data is stored, defaults to ./data")
-                .Build());
-            options.addOption(Option.builder()
-                .Option("port")
-                .LongOpt("port")
-                .HasArg()
-                .ArgName("port")
-                .Type(typeof(int))
-                .Desc("Port to listen on, defaults to 5396")
-                .Build());
-            CommandLine commandLine;
-            string dataDir;
-            int port;
-            try
+            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
             {
-                commandLine = new DefaultParser().parse(options, args);
-                dataDir = commandLine.hasOption("dataDir") ? commandLine.getOptionValue("dataDir")! : "./data";
-                port = commandLine.hasOption("port") ? commandLine.getParsedOptionValue<int>("port") : 5396;
-            }
-            catch (ParseException exception)
-            {
-                Log.Fatal(exception.ToString());
+                Log.Fatal($"Unhandeled exception: {e.ExceptionObject}");
                 Environment.Exit(1);
+            };
+
+            ParserResult<Options> res = Parser.Default.ParseArguments<Options>(args);
+
+            Options options;
+            if (res is Parsed<Options> parsed)
+                options = parsed.Value;
+            else if (res is NotParsed<Options> notParsed)
+            {
+                if (res.Errors.Any(error => error is HelpRequestedError))
+                    Environment.Exit(2);
+                else if (res.Errors.Any(error => error is VersionRequestedError))
+                    Environment.Exit(3);
+                else
+                    Environment.Exit(1);
                 return;
             }
+            else
+                return;
 
             NetworkServer server;
             try
             {
-                server = new NetworkServer(new Server(new DataStore(new DirectoryInfo(dataDir))), port);
+                server = new NetworkServer(new Server(new DataStore(new DirectoryInfo(options.DataDir))), options.Port);
             }
             catch (Exception ex) when (
                 ex is IOException

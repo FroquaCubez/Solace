@@ -59,9 +59,9 @@ namespace ViennaDotNet.ObjectStore.Server
             {
                 byteArrayOutputStream = new MemoryStream((int)file.Length);
             }
-            catch (IOException exception)
+            catch (IOException ex)
             {
-                throw new DataStoreException(exception);
+                throw new DataStoreException(ex);
             }
 
             try
@@ -70,9 +70,9 @@ namespace ViennaDotNet.ObjectStore.Server
                     fileInputStream.CopyTo(byteArrayOutputStream);
             }
 
-            catch (IOException exception)
+            catch (IOException ex)
             {
-                throw new DataStoreException(exception);
+                throw new DataStoreException(ex);
             }
 
             byte[] data = byteArrayOutputStream.ToArray();

@@ -7,9 +7,9 @@ using ViennaDotNet.Common.Utils;
 using ViennaDotNet.DB;
 using ViennaDotNet.EventBus.Client;
 using ViennaDotNet.ApiServer.Utils;
-using CliUtils;
-using CliUtils.Exceptions;
 using ViennaDotNet.ObjectStore.Client;
+using CommandLine;
+using ViennaDotNet.Common;
 
 namespace ViennaDotNet.ApiServer
 {
@@ -24,6 +24,23 @@ namespace ViennaDotNet.ApiServer
         internal static ObjectStoreClient objectStore;
         internal static TappablesManager tappablesManager;
         internal static BuildplateInstancesManager buildplateInstancesManager;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
+        class Options
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        {
+            [Option("port", Default = 80, Required = false, HelpText = "Port to listen on")]
+            public int HttpPort { get; set; }
+
+            [Option("db", Default = "./earth.db", Required = false, HelpText = "Database connection string")]
+            public string DatabaseConnectionString { get; set; }
+
+            [Option("eventbus", Default = "localhost:5532", Required = false, HelpText = "Event bus address")]
+            public string EventBusConnectionString { get; set; }
+
+            [Option("objectstore", Default = "localhost:5396", Required = false, HelpText = "Object storage address")]
+            public string ObjectStoreConnectionString { get; set; }
+        }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         public static void Main(string[] args)
@@ -49,69 +66,39 @@ namespace ViennaDotNet.ApiServer
 
             Log.Logger = log;
 
-            Options options = new Options();
-            options.addOption(Option.builder()
-                .Option("port")
-                .LongOpt("port")
-                .HasArg()
-                .ArgName("port")
-                .Type(typeof(int))
-                .Desc("Port to listen on, defaults to 80")
-                .Build());
-            options.addOption(Option.builder()
-                .Option("db")
-                .LongOpt("db")
-                .HasArg()
-                .ArgName("db")
-                .Desc("Database path, defaults to ./earth.db")
-                .Build());
-            options.addOption(Option.builder()
-                .Option("eventbus")
-                .LongOpt("eventbus")
-                .HasArg()
-                .ArgName("eventbus")
-                .Desc("Event bus address, defaults to localhost:5532")
-                .Build());
-            options.addOption(Option.builder()
-                .Option("objectstore")
-                .LongOpt("objectstore")
-                .HasArg()
-                .ArgName("objectstore")
-                .Desc("Object storage address, defaults to localhost:5396")
-                .Build());
-
-            CommandLine commandLine;
-            int httpPort;
-            string dbConnectionString;
-            string eventBusConnectionString;
-            string objectStoreConnectionString;
-#if !DEBUG
-            try
+            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
             {
-#endif
-                commandLine = new DefaultParser().parse(options, args);
-                httpPort = commandLine.hasOption("port") ? commandLine.getParsedOptionValue<int>("port") : 80;
-                dbConnectionString = commandLine.hasOption("db") ? commandLine.getOptionValue("db")! : "./earth.db";
-                eventBusConnectionString = commandLine.hasOption("eventbus") ? commandLine.getOptionValue("eventbus")! : "localhost:5532";
-                objectStoreConnectionString = commandLine.hasOption("objectstore") ? commandLine.getOptionValue("objectstore")! : "localhost:5396";
-#if !DEBUG
-            }
-            catch (ParseException exception)
-            {
-                Log.Fatal(exception.ToString());
+                Log.Fatal($"Unhandeled exception: {e.ExceptionObject}");
+                Log.CloseAndFlush();
                 Environment.Exit(1);
+            };
+
+            ParserResult<Options> res = Parser.Default.ParseArguments<Options>(args);
+
+            Options options;
+            if (res is Parsed<Options> parsed)
+                options = parsed.Value;
+            else if (res is NotParsed<Options> notParsed)
+            {
+                if (res.Errors.Any(error => error is HelpRequestedError))
+                    Environment.Exit(2);
+                else if (res.Errors.Any(error => error is VersionRequestedError))
+                    Environment.Exit(3);
+                else
+                    Environment.Exit(1);
                 return;
             }
-#endif
-
+            else
+                return;
+            
             Log.Information("Connecting to database");
             try
             {
-                DB = EarthDB.Open(dbConnectionString);
+                DB = EarthDB.Open(options.DatabaseConnectionString);
             }
             catch (EarthDB.DatabaseException ex)
             {
-                Log.Fatal("Could not connect to database", ex);
+                Log.Fatal($"Could not connect to database: {ex}");
                 Environment.Exit(1);
                 return;
             }
@@ -120,11 +107,11 @@ namespace ViennaDotNet.ApiServer
             Log.Information("Connecting to event bus");
             try
             {
-                eventBus = EventBusClient.create(eventBusConnectionString);
+                eventBus = EventBusClient.create(options.EventBusConnectionString);
             }
             catch (EventBusClientException ex)
             {
-                Log.Fatal("Could not connect to event bus", ex);
+                Log.Fatal($"Could not connect to event bus: {ex}");
                 Environment.Exit(1);
                 return;
             }
@@ -132,11 +119,11 @@ namespace ViennaDotNet.ApiServer
             Log.Information("Connecting to object storage");
             try
             {
-                objectStore = ObjectStoreClient.create(objectStoreConnectionString);
+                objectStore = ObjectStoreClient.create(options.ObjectStoreConnectionString);
             }
-            catch (ObjectStoreClientException exception)
+            catch (ObjectStoreClientException ex)
             {
-                Log.Fatal($"Could not connect to object storage: {exception}");
+                Log.Fatal($"Could not connect to object storage: {ex}");
                 Environment.Exit(1);
                 return;
             }
@@ -149,7 +136,7 @@ namespace ViennaDotNet.ApiServer
 
             BuildplateInstanceRequestHandler.start(DB, eventBus, objectStore, Catalog);
 
-            CreateHostBuilder(args, httpPort).Build().Run();
+            CreateHostBuilder(args, options.HttpPort).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args, int httpPort) =>

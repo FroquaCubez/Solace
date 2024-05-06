@@ -1,5 +1,4 @@
-﻿using CliUtils;
-using CliUtils.Exceptions;
+﻿using CommandLine;
 using Newtonsoft.Json;
 using Serilog;
 using System;
@@ -17,6 +16,25 @@ namespace ViennaDotNet.Buildplate_Importer
 {
     internal static class Program
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        class Options
+        {
+            [Option("db", Default = "./earth.db", Required = false, HelpText = "Database connection string")]
+            public string DatabaseConnectionString { get; set; }
+
+            [Option("eventbus", Default = "localhost:5532", Required = false, HelpText = "Event bus address")]
+            public string EventBusConnectionString { get; set; }
+
+            [Option("objectstore", Default = "localhost:5396", Required = false, HelpText = "Object storage address")]
+            public string ObjectStoreConnectionString { get; set; }
+
+            [Option("id", Required = true, HelpText = "Player ID to import for")]
+            public string PlayerId { get; set; }
+
+            [Option("dir", Required = true, HelpText = "World to import")]
+            public string WorldDir { get; set; }
+        }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static async Task<int> Main(string[] args)
         {
             var log = new LoggerConfiguration()
@@ -27,74 +45,38 @@ namespace ViennaDotNet.Buildplate_Importer
 
             Log.Logger = log;
 
-            Options options = new Options();
-            options.addOption(Option.builder()
-                .Option("db")
-                .LongOpt("db")
-                .HasArg()
-                .ArgName("db")
-                .Desc("Database path, defaults to ./earth.db")
-                .Build());
-            options.addOption(Option.builder()
-                .Option("objectstore")
-                .LongOpt("objectstore")
-                .HasArg()
-                .ArgName("objectstore")
-                .Desc("Object storage address, defaults to localhost:5396")
-                .Build());
-            options.addOption(Option.builder()
-                .Option("eventbus")
-                .LongOpt("eventbus")
-                .HasArg()
-                .ArgName("eventbus")
-                .Desc("Event bus address, defaults to localhost:5532")
-                .Build());
-            options.addOption(Option.builder()
-                .Option("playerId")
-                .LongOpt("playerId")
-                .HasArg()
-                .Required()
-                .ArgName("id")
-                .Desc("Player ID to import for")
-                .Build());
-            options.addOption(Option.builder()
-                .Option("worldDir")
-                .LongOpt("worldDir")
-                .HasArg()
-                .Required()
-                .ArgName("dir")
-                .Desc("World to import")
-                .Build());
-            CommandLine commandLine;
-            string dbConnectionString;
-            string objectStoreConnectionString;
-            string eventBusConnectionString;
-            string playerId;
-            string worldDir;
-            try
+            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
             {
-                commandLine = new DefaultParser().parse(options, args);
-                dbConnectionString = commandLine.hasOption("db") ? commandLine.getOptionValue("db")! : "./earth.db";
-                objectStoreConnectionString = commandLine.hasOption("objectstore") ? commandLine.getOptionValue("objectstore")! : "localhost:5396";
-                eventBusConnectionString = commandLine.hasOption("eventbus") ? commandLine.getOptionValue("eventbus")! : "localhost:5532";
-                playerId = commandLine.getOptionValue("playerId")!.ToLowerInvariant();
-                worldDir = commandLine.getOptionValue("worldDir")!;
+                Log.Fatal($"Unhandeled exception: {e.ExceptionObject}");
+                Environment.Exit(1);
+            };
+
+            ParserResult<Options> res = Parser.Default.ParseArguments<Options>(args);
+
+            Options options;
+            if (res is Parsed<Options> parsed)
+                options = parsed.Value;
+            else if (res is NotParsed<Options> notParsed)
+            {
+                if (res.Errors.Any(error => error is HelpRequestedError))
+                    return 4;
+                else if (res.Errors.Any(error => error is VersionRequestedError))
+                    return 5;
+                else
+                    return 1;
             }
-            catch (ParseException exception)
-            {
-                Log.Fatal(exception.ToString());
+            else
                 return 1;
-            }
 
             Log.Information("Connecting to database");
             EarthDB earthDB;
             try
             {
-                earthDB = EarthDB.Open(dbConnectionString);
+                earthDB = EarthDB.Open(options.DatabaseConnectionString);
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                Log.Fatal($"Could not connect to database: {exception}");
+                Log.Fatal($"Could not connect to database: {ex}");
                 return 1;
             }
             Log.Information("Connected to database");
@@ -103,11 +85,11 @@ namespace ViennaDotNet.Buildplate_Importer
             ObjectStoreClient objectStoreClient;
             try
             {
-                objectStoreClient = ObjectStoreClient.create(objectStoreConnectionString);
+                objectStoreClient = ObjectStoreClient.create(options.ObjectStoreConnectionString);
             }
-            catch (ObjectStoreClientException exception)
+            catch (ObjectStoreClientException ex)
             {
-                Log.Fatal($"Could not connect to object storage: {exception}");
+                Log.Fatal($"Could not connect to object storage: {ex}");
                 return 1;
             }
             Log.Information("Connected to object storage");
@@ -116,16 +98,16 @@ namespace ViennaDotNet.Buildplate_Importer
             EventBusClient? eventBusClient;
             try
             {
-                eventBusClient = EventBusClient.create(eventBusConnectionString);
+                eventBusClient = EventBusClient.create(options.EventBusConnectionString);
                 Log.Information("Connected to event bus");
             }
-            catch (EventBusClientException exception)
+            catch (EventBusClientException ex)
             {
-                Log.Warning($"Could not connect to event bus, buildplate preview will not be generated: {exception}");
+                Log.Warning($"Could not connect to event bus, buildplate preview will not be generated: {ex}");
                 eventBusClient = null;
             }
 
-            byte[]? serverData = createServerDataFromWorldDir(worldDir);
+            byte[]? serverData = createServerDataFromWorldDir(options.WorldDir);
             if (serverData == null)
             {
                 Log.Fatal("Could not get world data");
@@ -134,13 +116,13 @@ namespace ViennaDotNet.Buildplate_Importer
 
             string buildplateId = U.RandomUuid().ToString();
 
-            if (!await storeBuildplate(earthDB, eventBusClient, objectStoreClient, playerId, buildplateId, serverData, U.CurrentTimeMillis()))
+            if (!await storeBuildplate(earthDB, eventBusClient, objectStoreClient, options.PlayerId, buildplateId, serverData, U.CurrentTimeMillis()))
             {
                 Log.Fatal("Could not add buildplate");
                 return 3;
             }
 
-            Log.Information($"Added buildplate with ID {buildplateId} for player {playerId}");
+            Log.Information($"Added buildplate with ID {buildplateId} for player {options.PlayerId}");
             return 0;
         }
 
@@ -174,9 +156,9 @@ namespace ViennaDotNet.Buildplate_Importer
 
                 data = byteArrayOutputStream.ToArray();
             }
-            catch (IOException exception)
+            catch (IOException ex)
             {
-                Log.Error($"Could not get saved world data from world directory: {exception}");
+                Log.Error($"Could not get saved world data from world directory: {ex}");
                 return null;
             }
             return data;
@@ -235,9 +217,9 @@ namespace ViennaDotNet.Buildplate_Importer
                     .Execute(earthDB);
                 return true;
             }
-            catch (EarthDB.DatabaseException exception)
+            catch (EarthDB.DatabaseException ex)
             {
-                Log.Error($"Failed to store buildplate in database: {exception}");
+                Log.Error($"Failed to store buildplate in database: {ex}");
                 objectStoreClient.delete(serverDataObjectId);
                 objectStoreClient.delete(previewObjectId);
                 return false;

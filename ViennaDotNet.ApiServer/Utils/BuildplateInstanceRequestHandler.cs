@@ -112,9 +112,9 @@ namespace ViennaDotNet.ApiServer.Utils
                                 return null;
                         }
                     }
-                    catch (EarthDB.DatabaseException exception)
+                    catch (EarthDB.DatabaseException ex)
                     {
-                        Log.Error($"Database error while handling request: {exception}");
+                        Log.Error($"Database error while handling request: {ex}");
                         return null;
                     }
                 },
@@ -431,9 +431,9 @@ namespace ViennaDotNet.ApiServer.Utils
                 RequestWithBuildplateId<T>? request = JsonConvert.DeserializeObject<RequestWithBuildplateId<T>>(str);
                 return request;
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Error($"Bad JSON in buildplates event bus request: {exception}");
+                Log.Error($"Bad JSON in buildplates event bus request: {ex}");
                 return null;
             }
         }
@@ -445,9 +445,9 @@ namespace ViennaDotNet.ApiServer.Utils
                 T? request = JsonConvert.DeserializeObject<T>(str);
                 return request;
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Log.Error($"Bad JSON in buildplates event bus request: {exception}");
+                Log.Error($"Bad JSON in buildplates event bus request: {ex}");
                 return default;
             }
         }
