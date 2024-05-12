@@ -158,7 +158,6 @@ namespace ViennaDotNet.Buildplate.Launcher
         public void shutdown()
         {
             requestHandler.close();
-            publisher.close();
 
             Monitor.Enter(lockObj);
             shuttingDown = true;
@@ -182,6 +181,8 @@ namespace ViennaDotNet.Buildplate.Launcher
                     Log.Information($"Waiting for {this.runningInstanceCount} instances to finish");
             }
             Monitor.Exit(lockObj);
+
+            publisher.close();
         }
     }
 }
