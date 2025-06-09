@@ -809,19 +809,23 @@ public class Instance
 
             serverProcess = new ConsoleProcess(javaCmd, useShellExecute, !useShellExecute);
 
-            StreamWriter? writer = null;
             if (!useShellExecute)
             {
-                writer = new StreamWriter($"log_{instanceId}-server") { AutoFlush = true };
-                serverProcess.StandartTextReceived += (sender, e) => writer?.WriteLine(e.Data);
-                serverProcess.ErrorTextReceived += (sender, e) => writer?.WriteLine(e.Data);
+                serverProcess.StandartTextReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        Log.Debug($"[server] {e.Data}");
+                    }
+                };
+                serverProcess.ErrorTextReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        Log.Error($"[server] {e.Data}");
+                    }
+                };
             }
-
-            serverProcess.ProcessExited += (sender, e) =>
-            {
-                writer?.Close();
-                writer = null;
-            };
 
             serverProcess.ExecuteAsync(serverWorkDir!.FullName, ["-jar", fabricJarName, "-nogui"]);
 
@@ -860,19 +864,26 @@ public class Instance
             bool useShellExecute = true;
 
             bridgeProcess = new ConsoleProcess(javaCmd, useShellExecute, !useShellExecute);
-            StreamWriter? writer = null;
             if (!useShellExecute)
             {
-                writer = new StreamWriter($"log_{instanceId}-bridge") { AutoFlush = true };
-                bridgeProcess.StandartTextReceived += (sender, e) => writer?.WriteLine(e.Data);
-                bridgeProcess.ErrorTextReceived += (sender, e) => writer?.WriteLine(e.Data);
+                bridgeProcess.StandartTextReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        Log.Debug($"[bridge] {e.Data}");
+                    }
+                };
+                bridgeProcess.ErrorTextReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        Log.Error($"[bridge] {e.Data}");
+                    }
+                };
             }
 
             bridgeProcess.ProcessExited += (sender, e) =>
             {
-                writer?.Close();
-                writer = null;
-
                 Monitor.Enter(subprocessLock);
                 if (!shuttingDown)
                 {

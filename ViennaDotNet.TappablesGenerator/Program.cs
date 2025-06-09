@@ -84,9 +84,9 @@ internal static class Program
         EncounterGenerator encounterGenerator = new EncounterGenerator(staticData);
         Spawner[] spawner = new Spawner[1];
         ActiveTiles activeTiles = new ActiveTiles(eventBusClient, new ActiveTiles.ActiveTileListener(
-            activeTile =>
+            activeTiles =>
             {
-                spawner[0].spawnTile(activeTile.tileX, activeTile.tileY);
+                spawner[0].spawnTiles(activeTiles);
             },
             activeTile =>
             {

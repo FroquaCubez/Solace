@@ -112,8 +112,10 @@ public class TappablesController : ControllerBase
         long requestStartedOn = ((DateTime)HttpContext.Items["RequestStartedOn"]!).ToUnixTimeMilliseconds();
 
         TappablesManager.Tappable? tappable = tappablesManager.getTappableWithId(tappableRequest.id, tileId);
-        if (tappable == null || tappable.spawnTime > requestStartedOn || tappable.spawnTime + tappable.validFor <= requestStartedOn) // TODO: check player location is in radius
+        if (tappable == null || !tappablesManager.isTappableValidFor(tappable, requestStartedOn, tappableRequest.playerCoordinate.latitude, tappableRequest.playerCoordinate.longitude))
+        {
             return BadRequest();
+        }
 
         try
         {

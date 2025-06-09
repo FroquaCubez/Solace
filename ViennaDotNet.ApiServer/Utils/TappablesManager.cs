@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Serilog;
+using System.Diagnostics;
 using ViennaDotNet.Common;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.EventBus.Client;
@@ -9,6 +10,8 @@ namespace ViennaDotNet.ApiServer.Utils;
 
 public sealed class TappablesManager
 {
+    private static readonly long GRACE_PERIOD = 30000;
+
     private readonly Subscriber subscriber;
     private readonly RequestSender requestSender;
 
@@ -23,7 +26,7 @@ public sealed class TappablesManager
             Log.Fatal("Tappables event bus subscriber error");
             Environment.Exit(1);
         }));
-        this.requestSender = eventBusClient.addRequestSender();
+        requestSender = eventBusClient.addRequestSender();
     }
 
     public Tappable[] getTappablesAround(double lat, double lon, double radius)
@@ -109,6 +112,31 @@ public sealed class TappablesManager
         return null;
     }
 
+    public bool isTappableValidFor(Tappable tappable, long requestTime, float lat, float lon)
+	{
+		if (tappable.spawnTime - GRACE_PERIOD > requestTime || tappable.spawnTime + tappable.validFor + GRACE_PERIOD <= requestTime)
+		{
+			return false;
+		}
+
+		// TODO: check player location is in radius
+
+		return true;
+	}
+
+	// TODO: actually use this
+	public bool isEncounterValidFor(Encounter encounter, long requestTime, float lat, float lon)
+    {
+        if (encounter.spawnTime - GRACE_PERIOD > requestTime || encounter.spawnTime + encounter.validFor <= requestTime) // no grace period when checking end time because the buildplate instance shutdown does not include the grace period anyway
+        {
+            return false;
+        }
+
+        // TODO: check player location is in radius
+
+        return true;
+    }
+
     public void notifyTileActive(string playerId, double lat, double lon)
     {
         int tileX = xToTile(lonToX(lon));
@@ -130,20 +158,24 @@ public sealed class TappablesManager
         {
             case "tappableSpawn":
                 {
-                    Tappable? tappable;
+                    Tappable[]? tappables;
                     try
                     {
-                        tappable = JsonConvert.DeserializeObject<Tappable>(@event.data);
-                        if (tappable is null)
-                            throw new Exception("tappable is null");
+                        tappables = JsonConvert.DeserializeObject<Tappable[]>(@event.data);
                     }
                     catch (Exception ex)
                     {
-                        Log.Error("Could not deserialise tappable spawn event", ex);
+                        Log.Error($"Could not deserialise tappable spawn event {ex}");
                         break;
                     }
 
-                    addTappable(tappable);
+                    Debug.Assert(tappables is not null);
+
+                    foreach (var tappable in tappables)
+                    {
+                        addTappable(tappable);
+                    }
+
                     if (pruneCounter++ == 10)
                     {
                         pruneCounter = 0;
@@ -154,11 +186,11 @@ public sealed class TappablesManager
                 break;
             case "encounterSpawn":
                 {
-                    Encounter? encounter;
+                    Encounter[]? encounters;
 
                     try
                     {
-                        encounter = JsonConvert.DeserializeObject<Encounter>(@event.data);
+                        encounters = JsonConvert.DeserializeObject<Encounter[]>(@event.data);
                     }
                     catch (Exception exception)
                     {
@@ -166,13 +198,12 @@ public sealed class TappablesManager
                         break;
                     }
 
-                    if (encounter is null)
-                    {
-                        Log.Error($"Could not deserialise encounter spawn event: object is null");
-                        break;
-                    }
+                    Debug.Assert(encounters is not null);
 
-                    addEncounter(encounter);
+                    foreach (var encounter in encounters)
+                    {
+                        addEncounter(encounter);
+                    }
 
                     if (pruneCounter++ == 10)
                     {
@@ -205,7 +236,7 @@ public sealed class TappablesManager
             {
                 Tappable tappable = entry.Value;
                 long expiresAt = tappable.spawnTime + tappable.validFor;
-                return expiresAt <= currentTime;
+                return expiresAt + GRACE_PERIOD <= currentTime;
             });
         }
 
@@ -217,7 +248,7 @@ public sealed class TappablesManager
             {
                 Encounter encounter = entry.Value;
                 long expiresAt = encounter.spawnTime + encounter.validFor;
-                return expiresAt <= currentTime;
+                return expiresAt + GRACE_PERIOD <= currentTime;
             });
         }
 
