@@ -44,7 +44,11 @@ public class NetworkServer
         private readonly Socket socket;
 
         //private readonly NetworkStream outputStream;
+#if NET9_0_OR_GREATER
         private readonly Lock sendLock = new();
+#else
+        private readonly object sendLock = new();
+#endif
 
         private readonly Dictionary<int, Channel> channels = [];
 

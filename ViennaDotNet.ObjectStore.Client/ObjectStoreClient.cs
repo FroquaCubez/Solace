@@ -54,7 +54,11 @@ public class ObjectStoreClient
     private readonly BlockingCollection<object> outgoingMessageQueue = [];
     private readonly Thread outgoingThread;
     private readonly Thread incomingThread;
+#if NET9_0_OR_GREATER
     private readonly Lock _lock = new();
+#else
+    private readonly object _lock = new();
+#endif
 
     private bool closed = false;
 

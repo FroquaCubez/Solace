@@ -10,7 +10,14 @@ public sealed class TileRenderer
 {
     public TileRenderer(string dir)
     {
-        TagMapJson = File.ReadAllText(Path.Combine(dir, "tagMap.json"));
+        try
+        {
+            TagMapJson = File.ReadAllText(Path.Combine(dir, "tagMap.json"));
+        }
+        catch (Exception exception)
+        {
+            throw new StaticDataException(null, exception);
+        }
     }
 
     public string TagMapJson { get; }
