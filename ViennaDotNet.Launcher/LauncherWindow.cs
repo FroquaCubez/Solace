@@ -11,6 +11,8 @@ namespace ViennaDotNet.Launcher;
 
 internal sealed class LauncherWindow : Window
 {
+    private static Settings settings => Program.Settings;
+
     public LauncherWindow()
     {
         Title = "ViennaDotNet Launcher";
@@ -22,13 +24,41 @@ internal sealed class LauncherWindow : Window
             Text = "Start",
         };
 
-        var exitBtn = new Button()
+        var optionsBtn = new Button()
         {
             X = Pos.Center(),
             Y = Pos.Bottom(startBtn) + 1,
-            Text = "Exit",
+            Text = "Options",
+        };
+        optionsBtn.Accepting += (s, e) =>
+        {
+            var options = new OptionsWindow(settings)
+            {
+                X = Pos.Center(),
+                Y = Pos.Center(),
+                //Modal = true,
+            };
+
+            Application.Run(options);
+
+            settings.Save(Program.SettingsFile);
+
+            e.Handled = true;
         };
 
+        var dataBtn = new Button()
+        {
+            X = Pos.Center(),
+            Y = Pos.Bottom(optionsBtn) + 1,
+            Text = "Import/Export data",
+        };
+
+        var exitBtn = new Button()
+        {
+            X = Pos.Center(),
+            Y = Pos.Bottom(dataBtn) + 1,
+            Text = "Exit",
+        };
         exitBtn.Accepting += (s, e) =>
         {
             Application.RequestStop();
@@ -36,6 +66,6 @@ internal sealed class LauncherWindow : Window
             e.Handled = true;
         };
 
-        Add(startBtn, exitBtn);
+        Add(startBtn, optionsBtn, dataBtn, exitBtn);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MathUtils.Vectors;
 using Serilog;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using Terminal.Gui.App;
 using Terminal.Gui.Configuration;
@@ -10,11 +11,15 @@ namespace ViennaDotNet.Launcher;
 
 internal static class Program
 {
-    public static Settings Settings = new Settings();
-    private static readonly string settingsFile = "config.json";
+    public const string SettingsFile = "config.json";
+
+    public static Settings Settings;
 
     static async Task Main(string[] args)
     {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+        CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
+
         var log = new LoggerConfiguration()
             .WriteTo.Console()
             .WriteTo.File("logs/debug.txt", rollingInterval: RollingInterval.Day, rollOnFileSizeLimit: true, fileSizeLimitBytes: 8338607, outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
@@ -35,7 +40,7 @@ internal static class Program
 
         await AutoUpdater.CheckAndUpdate();
 
-        Settings = Settings.Load(settingsFile);
+        Settings = Settings.Load(SettingsFile);
 
         //ConfigurationManager.RuntimeConfig = """{ "Theme": "Light" }""";
         ConfigurationManager.Enable(ConfigLocations.All);

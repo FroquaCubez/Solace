@@ -12,7 +12,8 @@ public class Settings
         EventBusPort = 5532,
         ObjectStorePort = 5396,
         IPv4 = "192.168.x.x",
-        DatabaseConnectionString = $".{Path.DirectorySeparatorChar}..{Path.DirectorySeparatorChar}earth.db",
+        EarthDatabaseConnectionString = $".{Path.DirectorySeparatorChar}earth.db",
+        TileDatabaseConnectionString = "Host=localhost;Username=mylogin;Password=mypass;Database=genoa_tile_data",
         SkipFileChecks = false,
     };
 
@@ -20,7 +21,8 @@ public class Settings
     public ushort? EventBusPort { get; set; }
     public ushort? ObjectStorePort { get; set; }
     public string? IPv4 { get; set; }
-    public string? DatabaseConnectionString { get; set; }
+    public string? EarthDatabaseConnectionString { get; set; }
+    public string? TileDatabaseConnectionString { get; set; }
 
     public bool? SkipFileChecks { get; set; }
 
@@ -35,7 +37,7 @@ public class Settings
 
         if (!File.Exists(path))
         {
-            Log.Information($"Config file doesn't exist, using default");
+            Log.Information($"Config file doesn't exist, created default");
             settings = Default;
         }
         else
@@ -77,15 +79,15 @@ public class Settings
 
         if (settings.IPv4 is null || !IPAddress.TryParse(settings.IPv4, out var _))
         {
-            Log.Warning($"IPv4 is invalid, using default: {Default.IPv4} (Change this in Configure/IPv4)");
+            Log.Warning($"IPv4 is invalid, using default: {Default.IPv4} (Change this in Options/IPv4)");
             settings.IPv4 = Default.IPv4;
             anyErrors = true;
         }
 
-        if (settings.DatabaseConnectionString is null)
+        if (settings.EarthDatabaseConnectionString is null)
         {
-            Log.Warning($"DatabaseConnectionString is invalid, using default: {Default.DatabaseConnectionString}");
-            settings.DatabaseConnectionString = Default.DatabaseConnectionString;
+            Log.Warning($"DatabaseConnectionString is invalid, using default: {Default.EarthDatabaseConnectionString}");
+            settings.EarthDatabaseConnectionString = Default.EarthDatabaseConnectionString;
             anyErrors = true;
         }
 
@@ -101,7 +103,9 @@ public class Settings
         settings.Save(path);
 
         if (anyErrors)
+        {
             U.PAK();
+        }
 
         return settings;
     }

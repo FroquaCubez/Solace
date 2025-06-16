@@ -29,7 +29,7 @@ internal static class BuildplateImporter
         {
             process = Process.Start(new ProcessStartInfo(Path.GetFullPath(Path.Combine(DirName, ExeName)), new string[]
             {
-                $"--db={settings.DatabaseConnectionString}",
+                $"--db={settings.EarthDatabaseConnectionString}",
                 $"--eventbus=localhost:{settings.EventBusPort}",
                 $"--objectstore=localhost:{settings.ObjectStorePort}",
                 $"--id={playerId}",
