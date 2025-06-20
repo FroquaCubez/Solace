@@ -180,7 +180,7 @@ internal sealed class LauncherWindow : Window
             bool error = false;
             foreach (string programExe in programExes)
             {
-                if (!GetProgramProcess(programExe).Any())
+                if (!GetProgramProcesses(programExe).Any())
                 {
                     logger.Error($"It was detected that {programExe} crashed/exited, make sure all options are set correctly, look into logs/[program name]/logxxx for more info");
                     error = true;
@@ -189,7 +189,7 @@ internal sealed class LauncherWindow : Window
 
             if (!error)
             {
-                logger.Information("All programs (most likely) have started succesfully");
+                logger.Information("All programs have (most likely) started succesfully");
             }
         });
 
@@ -219,7 +219,7 @@ internal sealed class LauncherWindow : Window
         logger.Information($"Stopping {name}");
 
         int stoppedCount = 0;
-        foreach (var process in GetProgramProcess(name))
+        foreach (var process in GetProgramProcesses(name))
         {
             await process.StopGracefullyOrKillAsync(3000, cancellationToken);
             stoppedCount++;
@@ -233,7 +233,7 @@ internal sealed class LauncherWindow : Window
         });
     }
 
-    private static IEnumerable<Process> GetProgramProcess(string name)
+    private static IEnumerable<Process> GetProgramProcesses(string name)
     {
         string exePath = Path.GetFullPath(name);
 
