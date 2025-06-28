@@ -38,17 +38,17 @@ public sealed class LevelUtils
         Rewards rewards = new Rewards();
         if (level.Rubies > 0)
         {
-            rewards.addRubies(level.Rubies);
+            rewards.AddRubies(level.Rubies);
         }
 
         foreach (var item in level.Items)
         {
-            rewards.addItem(item.Id, item.Count);
+            rewards.AddItem(item.Id, item.Count);
         }
 
         foreach (string buildplate in level.Buildplates)
         {
-            rewards.addBuildplate(buildplate);
+            rewards.AddBuildplate(buildplate);
         }
 
         return rewards;

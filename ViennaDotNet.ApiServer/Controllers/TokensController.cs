@@ -101,24 +101,24 @@ public class TokensController : ControllerBase
     private static Token TokenToApiResponse(Tokens.Token token)
     {
         Dictionary<string, string> properties = [];
-        switch (token.Type)
+        switch (token)
         {
-            case Tokens.Token.TypeE.JOURNAL_ITEM_UNLOCKED:
-                properties["itemid"] = ((Tokens.JournalItemUnlockedToken)token).ItemId;
+            case Tokens.JournalItemUnlockedToken journalItemUnlocked:
+                properties["itemid"] = journalItemUnlocked.ItemId;
                 break;
         }
 
-        Rewards rewards = token.Type switch
+        Rewards rewards = token switch
         {
-            Tokens.Token.TypeE.LEVEL_UP => Rewards.FromDBRewardsModel(((Tokens.LevelUpToken)token).Rewards).setLevel(((Tokens.LevelUpToken)token).Level),
+            Tokens.LevelUpToken levelUp => Rewards.FromDBRewardsModel(levelUp.Rewards).SetLevel(((Tokens.LevelUpToken)token).Level),
             _ => new Rewards(),
         };
 
-        Token.LifetimeE lifetime = token.Type switch
+        Token.LifetimeE lifetime = token switch
         {
-            Tokens.Token.TypeE.LEVEL_UP => Token.LifetimeE.TRANSIENT,
-            Tokens.Token.TypeE.JOURNAL_ITEM_UNLOCKED => Token.LifetimeE.PERSISTENT,
-            _ => throw new InvalidDataException($"Unknown Token type '{token.Type}'"),
+            Tokens.LevelUpToken => Token.LifetimeE.TRANSIENT,
+            Tokens.JournalItemUnlockedToken => Token.LifetimeE.PERSISTENT,
+            _ => throw new InvalidDataException($"Unknown Token type '{token?.GetType()?.ToString() ?? null}'"),
         };
 
         return new Token(

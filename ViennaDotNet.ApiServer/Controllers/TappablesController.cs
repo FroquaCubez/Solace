@@ -160,7 +160,7 @@ public class TappablesController : ControllerBase
 
                     foreach (TappablesManager.Tappable.Item item in tappable.Items)
                     {
-                        rewards.addItem(item.Id, item.Count);
+                        rewards.AddItem(item.Id, item.Count);
                         int experiencePoints = staticData.Catalog.ItemsCatalog.GetItem(item.Id)!.Experience.Tappable;
                         int experiencePointsMultiplier = experiencePointsGlobalMultiplier + experiencePointsPerItemMultiplier.GetValueOrDefault(item.Id);
                         if (experiencePointsMultiplier > 0)
@@ -168,16 +168,16 @@ public class TappablesController : ControllerBase
                             experiencePoints = (experiencePoints * (experiencePointsMultiplier + 100)) / 100;
                         }
 
-                        rewards.addExperiencePoints(experiencePoints * item.Count);
+                        rewards.AddExperiencePoints(experiencePoints * item.Count);
                     }
 
-                    rewards.addRubies(1); // TODO
+                    rewards.AddRubies(1); // TODO
 
                     redeemedTappables.Add(tappable.Id, tappable.SpawnTime + tappable.ValidFor);
                     redeemedTappables.Prune(requestStartedOn);
                     query.Update("redeemedTappables", playerId, redeemedTappables);
                     query.Then(ActivityLogUtils.AddEntry(playerId, new ActivityLog.TappableEntry(requestStartedOn, rewards.ToDBRewardsModel())));
-                    query.Then(rewards.toRedeemQuery(playerId, requestStartedOn, staticData));
+                    query.Then(rewards.ToRedeemQuery(playerId, requestStartedOn, staticData));
                     query.Then(results2 => new EarthDB.Query(false).Extra("success", true).Extra("rewards", rewards));
 
                     return query;

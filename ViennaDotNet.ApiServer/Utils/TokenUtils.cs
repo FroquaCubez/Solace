@@ -40,7 +40,7 @@ public static class TokenUtils
 
                         updateQuery.Then(ActivityLogUtils.AddEntry(playerId, new ActivityLog.LevelUpEntry(currentTime, levelUpToken.Level)));
 
-                        updateQuery.Then(Rewards.FromDBRewardsModel(levelUpToken.Rewards).toRedeemQuery(playerId, currentTime, staticData));
+                        updateQuery.Then(Rewards.FromDBRewardsModel(levelUpToken.Rewards).ToRedeemQuery(playerId, currentTime, staticData));
 
                         return updateQuery;
                     }, false);

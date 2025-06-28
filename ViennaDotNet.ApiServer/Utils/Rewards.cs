@@ -13,52 +13,52 @@ public sealed class Rewards
     private int _experiencePoints;
 
     private int? _level;
-    private Dictionary<string, int?> _items = [];
-    private HashSet<string> _buildplates = [];
-    private HashSet<string> _challenges = [];
+    private readonly Dictionary<string, int?> _items = [];
+    private readonly HashSet<string> _buildplates = [];
+    private readonly HashSet<string> _challenges = [];
 
     public Rewards()
     {
         // empty
     }
 
-    public Rewards setLevel(int level)
+    public Rewards SetLevel(int level)
     {
         _level = level;
         return this;
     }
 
-    public Rewards addItem(string id, int count)
+    public Rewards AddItem(string id, int count)
     {
         _items[id] = _items.GetOrDefault(id, 0) + count;
         return this;
     }
 
-    public Rewards addBuildplate(string id)
+    public Rewards AddBuildplate(string id)
     {
         _buildplates.Add(id);
         return this;
     }
 
-    public Rewards addChallenge(string id)
+    public Rewards AddChallenge(string id)
     {
         _challenges.Add(id);
         return this;
     }
 
-    public Rewards addRubies(int rubies)
+    public Rewards AddRubies(int rubies)
     {
         _rubies += rubies;
         return this;
     }
 
-    public Rewards addExperiencePoints(int experiencePoints)
+    public Rewards AddExperiencePoints(int experiencePoints)
     {
         _experiencePoints += experiencePoints;
         return this;
     }
 
-    public EarthDB.Query toRedeemQuery(string playerId, long currentTime, StaticData.StaticData staticData)
+    public EarthDB.Query ToRedeemQuery(string playerId, long currentTime, StaticData.StaticData staticData)
     {
         EarthDB.Query getQuery = new EarthDB.Query(true);
         if (_rubies > 0 || _experiencePoints > 0)
@@ -180,14 +180,16 @@ public sealed class Rewards
     public static Rewards FromDBRewardsModel(DB.Models.Common.Rewards rewardsModel)
     {
         Rewards rewards = new Rewards();
-        rewards.addRubies(rewardsModel.Rubies);
-        rewards.addExperiencePoints(rewardsModel.ExperiencePoints);
+        rewards.AddRubies(rewardsModel.Rubies);
+        rewards.AddExperiencePoints(rewardsModel.ExperiencePoints);
         if (rewardsModel.Level is not null)
-            rewards.setLevel(rewardsModel.Level.Value);
+        {
+            rewards.SetLevel(rewardsModel.Level.Value);
+        }
 
-        rewardsModel.Items.ForEach((id, count) => rewards.addItem(id, count ?? 0));
-        Array.ForEach(rewardsModel.Buildplates, id => rewards.addBuildplate(id));
-        Array.ForEach(rewardsModel.Challenges, id => rewards.addChallenge(id));
+        rewardsModel.Items.ForEach((id, count) => rewards.AddItem(id, count ?? 0));
+        Array.ForEach(rewardsModel.Buildplates, id => rewards.AddBuildplate(id));
+        Array.ForEach(rewardsModel.Challenges, id => rewards.AddChallenge(id));
         return rewards;
     }
 

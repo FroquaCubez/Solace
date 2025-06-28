@@ -62,23 +62,23 @@ public class JournalController : ControllerBase
 
     private static Types.Journal.JournalRecord.ActivityLogEntry ActivityLogEntryToApiResponse(ActivityLog.Entry entry)
     {
-        Rewards rewards = entry.Type switch
+        Rewards rewards = entry switch
         {
-            ActivityLog.Entry.TypeE.LEVEL_UP => new Rewards().setLevel(((ActivityLog.LevelUpEntry)entry).Level),
-            ActivityLog.Entry.TypeE.TAPPABLE => Rewards.FromDBRewardsModel(((ActivityLog.TappableEntry)entry).Rewards),
-            ActivityLog.Entry.TypeE.JOURNAL_ITEM_UNLOCKED => new Rewards().addItem(((ActivityLog.JournalItemUnlockedEntry)entry).ItemId, 0),
-            ActivityLog.Entry.TypeE.CRAFTING_COMPLETED => Rewards.FromDBRewardsModel(((ActivityLog.CraftingCompletedEntry)entry).Rewards),
-            ActivityLog.Entry.TypeE.SMELTING_COMPLETED => Rewards.FromDBRewardsModel(((ActivityLog.SmeltingCompletedEntry)entry).Rewards),
-            ActivityLog.Entry.TypeE.BOOST_ACTIVATED => new Rewards(),
-            _ => throw new InvalidDataException($"Unknown ActivityLog.Entry.Type '{entry.Type}'"),
+            ActivityLog.LevelUpEntry levelUp => new Rewards().SetLevel(levelUp.Level),
+            ActivityLog.TappableEntry tappable => Rewards.FromDBRewardsModel(tappable.Rewards),
+            ActivityLog.JournalItemUnlockedEntry journalItemUnlocked => new Rewards().AddItem(journalItemUnlocked.ItemId, 0),
+            ActivityLog.CraftingCompletedEntry craftingCompleted => Rewards.FromDBRewardsModel(craftingCompleted.Rewards),
+            ActivityLog.SmeltingCompletedEntry smeltingCompleted => Rewards.FromDBRewardsModel(smeltingCompleted.Rewards),
+            ActivityLog.BoostActivatedEntry => new Rewards(),
+            _ => throw new InvalidDataException($"Unknown ActivityLog.Entry '{entry?.GetType()?.ToString() ?? "null"}'"),
         };
 
         Dictionary<string, string> properties = [];
-        switch (entry.Type)
+        switch (entry)
         {
-            case ActivityLog.Entry.TypeE.BOOST_ACTIVATED:
+            case ActivityLog.BoostActivatedEntry boostActivated:
                 {
-                    properties["boostId"] = ((ActivityLog.BoostActivatedEntry)entry).ItemId;
+                    properties["boostId"] = boostActivated.ItemId;
                 }
 
                 break;

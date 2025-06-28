@@ -29,12 +29,6 @@ public sealed class EarthDB : IDisposable
     private readonly object _lock = new();
 #endif
 
-    static EarthDB()
-    {
-        jsonOptions.Converters.Add(new Tokens.TokenConverter());
-        jsonOptions.Converters.Add(new ActivityLog.Entry.EntryConverter());
-    }
-
     private EarthDB(string _connectionString)
     {
         connectionString = _connectionString;

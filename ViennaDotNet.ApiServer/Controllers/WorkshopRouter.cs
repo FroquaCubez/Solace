@@ -511,7 +511,7 @@ public class WorkshopRouter : ControllerBase
 
                         int quantity = state.AvailableRounds * state.Output.Count;
                         if (quantity > 0)
-                            rewards.addItem(state.Output.Id, quantity);
+                            rewards.AddItem(state.Output.Id, quantity);
 
                         if (state.Completed)
                             craftingSlot.ActiveJob = null;
@@ -525,7 +525,7 @@ public class WorkshopRouter : ControllerBase
                     return new EarthDB.Query(true)
                         .Update("crafting", playerId, craftingSlots)
                         .Then(ActivityLogUtils.AddEntry(playerId, new ActivityLog.CraftingCompletedEntry(requestStartedOn, rewards.ToDBRewardsModel())))
-                        .Then(rewards.toRedeemQuery(playerId, requestStartedOn, staticData));
+                        .Then(rewards.ToRedeemQuery(playerId, requestStartedOn, staticData));
                 }))
                 .ExecuteAsync(earthDB, cancellationToken);
 
@@ -567,7 +567,7 @@ public class WorkshopRouter : ControllerBase
 
                         int quantity = state.AvailableRounds * state.Output.Count;
                         if (quantity > 0)
-                            rewards.addItem(state.Output.Id, quantity);
+                            rewards.AddItem(state.Output.Id, quantity);
 
                         if (state.Completed)
                         {
@@ -590,7 +590,7 @@ public class WorkshopRouter : ControllerBase
                     return new EarthDB.Query(true)
                         .Update("smelting", playerId, smeltingSlots)
                         .Then(ActivityLogUtils.AddEntry(playerId, new ActivityLog.SmeltingCompletedEntry(requestStartedOn, rewards.ToDBRewardsModel())))
-                        .Then(rewards.toRedeemQuery(playerId, requestStartedOn, staticData));
+                        .Then(rewards.ToRedeemQuery(playerId, requestStartedOn, staticData));
                 }))
                 .ExecuteAsync(earthDB, cancellationToken);
 
@@ -651,14 +651,14 @@ public class WorkshopRouter : ControllerBase
                     int outputQuantity = state.AvailableRounds * state.Output.Count;
                     if (outputQuantity > 0)
                     {
-                        rewards.addItem(state.Output.Id, outputQuantity);
+                        rewards.AddItem(state.Output.Id, outputQuantity);
                     }
 
                     craftingSlot.ActiveJob = null;
 
                     query.Update("crafting", playerId, craftingSlots).Update("inventory", playerId, inventory).Update("journal", playerId, journal);
                     query.Then(ActivityLogUtils.AddEntry(playerId, new ActivityLog.CraftingCompletedEntry(requestStartedOn, rewards.ToDBRewardsModel())), false);
-                    query.Then(rewards.toRedeemQuery(playerId, requestStartedOn, staticData), false);
+                    query.Then(rewards.ToRedeemQuery(playerId, requestStartedOn, staticData), false);
 
                     return query;
                 }))
@@ -727,7 +727,7 @@ public class WorkshopRouter : ControllerBase
                     int outputQuantity = state.AvailableRounds * state.Output.Count;
                     if (outputQuantity > 0)
                     {
-                        rewards.addItem(state.Output.Id, outputQuantity);
+                        rewards.AddItem(state.Output.Id, outputQuantity);
                     }
 
                     smeltingSlot.ActiveJob = null;
@@ -738,7 +738,7 @@ public class WorkshopRouter : ControllerBase
 
                     query.Update("smelting", playerId, smeltingSlots).Update("inventory", playerId, inventory).Update("journal", playerId, journal);
                     query.Then(ActivityLogUtils.AddEntry(playerId, new ActivityLog.SmeltingCompletedEntry(requestStartedOn, rewards.ToDBRewardsModel())), false);
-                    query.Then(rewards.toRedeemQuery(playerId, requestStartedOn, staticData), false);
+                    query.Then(rewards.ToRedeemQuery(playerId, requestStartedOn, staticData), false);
 
                     return query;
                 }))

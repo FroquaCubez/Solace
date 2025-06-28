@@ -30,17 +30,25 @@ public sealed class ActivityLog
 
     public void Prune()
     {
-        // it is widely known that the activity log is length limited but there is only ONE person who has stated how long it was limited to and apparently it is 40 entires
+        // it is widely known that the activity log is length limited but there is only ONE person who has stated how long it was limited to and apparently it is 40 entries
         while (_entries.Count > 40)
         {
             _entries.RemoveFirst();
         }
     }
 
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+    [JsonDerivedType(typeof(LevelUpEntry), "LEVEL_UP")]
+    [JsonDerivedType(typeof(TappableEntry), "TAPPABLE")]
+    [JsonDerivedType(typeof(JournalItemUnlockedEntry), "JOURNAL_ITEM_UNLOCKED")]
+    [JsonDerivedType(typeof(CraftingCompletedEntry), "CRAFTING_COMPLETED")]
+    [JsonDerivedType(typeof(SmeltingCompletedEntry), "SMELTING_COMPLETED")]
+    [JsonDerivedType(typeof(BoostActivatedEntry), "BOOST_ACTIVATED")]
     public abstract class Entry
     {
         public long Timestamp { get; init; }
 
+        [JsonIgnore]
         public TypeE Type { get; init; }
 
         protected Entry(long timestamp, TypeE type)
@@ -58,39 +66,6 @@ public sealed class ActivityLog
             CRAFTING_COMPLETED,
             SMELTING_COMPLETED,
             BOOST_ACTIVATED,
-        }
-
-        public sealed class EntryConverter : JsonConverter<Entry>
-        {
-            public override Entry? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
-            {
-                using (JsonDocument document = JsonDocument.ParseValue(ref reader))
-                {
-                    JsonElement root = document.RootElement;
-
-                    if (!root.TryGetProperty("type", out JsonElement typeElement) ||
-                        !Enum.TryParse<TypeE>(typeElement.GetString(), out var type))
-                    {
-                        throw new JsonException("Invalid or missing type property.");
-                    }
-
-                    string json = root.GetRawText();
-
-                    return type switch
-                    {
-                        Entry.TypeE.LEVEL_UP => JsonSerializer.Deserialize<LevelUpEntry>(json, options),
-                        Entry.TypeE.TAPPABLE => JsonSerializer.Deserialize<TappableEntry>(json, options),
-                        Entry.TypeE.JOURNAL_ITEM_UNLOCKED => JsonSerializer.Deserialize<JournalItemUnlockedEntry>(json, options),
-                        Entry.TypeE.CRAFTING_COMPLETED => JsonSerializer.Deserialize<CraftingCompletedEntry>(json, options),
-                        Entry.TypeE.SMELTING_COMPLETED => JsonSerializer.Deserialize<SmeltingCompletedEntry>(json, options),
-                        Entry.TypeE.BOOST_ACTIVATED => JsonSerializer.Deserialize<BoostActivatedEntry>(json, options),
-                        _ => throw new JsonException("Invalid entry type."),
-                    };
-                }
-            }
-
-            public override void Write(Utf8JsonWriter writer, Entry value, JsonSerializerOptions options)
-                => throw new NotImplementedException("Serialization is not implemented.");
         }
     }
 

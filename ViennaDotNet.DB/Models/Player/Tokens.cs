@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using ViennaDotNet.Common.Utils;
 using ViennaDotNet.DB.Models.Common;
+using static ViennaDotNet.DB.Models.Player.ActivityLog;
 
 namespace ViennaDotNet.DB.Models.Player;
 
@@ -46,11 +47,15 @@ public sealed class Tokens
         return res;
     }
 
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+    [JsonDerivedType(typeof(LevelUpToken), "LEVEL_UP")]
+    [JsonDerivedType(typeof(JournalItemUnlockedToken), "JOURNAL_ITEM_UNLOCKED")]
     public abstract class Token
     {
+        [JsonIgnore]
         public TypeE Type { get; init; }
 
-        public Token(TypeE type)
+        protected Token(TypeE type)
         {
             Type = type;
         }
@@ -63,36 +68,7 @@ public sealed class Tokens
         }
     }
 
-    public sealed class TokenConverter : JsonConverter<Token>
-    {
-        public override Token? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            using (JsonDocument document = JsonDocument.ParseValue(ref reader))
-            {
-                JsonElement root = document.RootElement;
-
-                if (!root.TryGetProperty("type", out JsonElement typeElement) ||
-                    !Enum.TryParse<Token.TypeE>(typeElement.GetString(), out var type))
-                {
-                    throw new JsonException("Invalid or missing type property.");
-                }
-
-                string json = root.GetRawText();
-
-                return type switch
-                {
-                    Token.TypeE.LEVEL_UP => JsonSerializer.Deserialize<LevelUpToken>(json, options),
-                    Token.TypeE.JOURNAL_ITEM_UNLOCKED => JsonSerializer.Deserialize<JournalItemUnlockedToken>(json, options),
-                    _ => throw new JsonException($"Unexpected token type: {type}")
-                };
-            }
-        }
-
-        public override void Write(Utf8JsonWriter writer, Token value, JsonSerializerOptions options)
-            => throw new NotImplementedException("Serialization is not implemented.");
-    }
-
-    public class LevelUpToken : Token
+    public sealed class LevelUpToken : Token
     {
         public int Level { get; init; }
         public Rewards Rewards { get; init; }
@@ -105,7 +81,7 @@ public sealed class Tokens
         }
     }
 
-    public class JournalItemUnlockedToken : Token
+    public sealed class JournalItemUnlockedToken : Token
     {
         public string ItemId { get; init; }
 
